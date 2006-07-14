@@ -1,3 +1,22 @@
+####  Copyright (C) 2005-2006  Oscar Rueda Palacio and Ram� D�z-Uriarte
+
+#### This program is free software; you can redistribute it and/or
+#### modify it under the terms of the GNU General Public License
+#### as published by the Free Software Foundation; either version 2
+#### of the License, or (at your option) any later version.
+
+#### This program is distributed in the hope that it will be useful,
+#### but WITHOUT ANY WARRANTY; without even the implied warranty of
+#### MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#### GNU General Public License for more details.
+
+#### You should have received a copy of the GNU General Public License
+#### along with this program; if not, write to the Free Software
+#### Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307,
+#### USA.
+
+
+
 .__RJACGH_DEBUG <- FALSE
 
 #########################################################################
@@ -170,13 +189,12 @@ MetropolisSweep.C <- function(y, x, k.max, Chrom, model=NULL, burnin, TOT, prob.
   ##Size of vectors
   size.mu <- TOT * k.max*(k.max+1)/2
   size.sigma.2 <- TOT * k.max*(k.max+1)/2
-  size.ga <- TOT * k.max
   size.beta <- TOT * k.max * (k.max+1) * (2*k.max+1) / 6
   mu <- rep(0, size.mu)
   sigma.2 <- rep(0, size.sigma.2)
-  ga <- rep(0, size.ga)
   beta <- rep(0, size.beta)
   probStates <- rep(0, n*(k.max^2 - k.max) / 2)
+  loglik <- rep(0, TOT * k.max)
   if (is.null(start.k)) start.k <- 0
 
   ## checks
@@ -207,7 +225,7 @@ MetropolisSweep.C <- function(y, x, k.max, Chrom, model=NULL, burnin, TOT, prob.
               sigma2=as.double(sigma.2), beta=as.double(beta),
               stat=as.double(stat), startK=as.integer(start.k),
               RJ=as.integer(1*RJ), maxVar=as.double(maxVar),
-              probStates=as.double(probStates))
+              probStates=as.double(probStates), loglik=as.double(loglik))
   }
   else {
     index <- diff(Chrom)
@@ -233,7 +251,7 @@ MetropolisSweep.C <- function(y, x, k.max, Chrom, model=NULL, burnin, TOT, prob.
               sigma2=as.double(sigma.2), beta=as.double(beta),
               stat=as.double(stat), startK=as.integer(start.k),
               RJ=as.integer(1*RJ), maxVar=as.double(maxVar),
-              probStates=as.double(probStates))
+              probStates=as.double(probStates), loglik=as.double(loglik))
 
   }
   ##Reconstruct objects
@@ -242,8 +260,8 @@ MetropolisSweep.C <- function(y, x, k.max, Chrom, model=NULL, burnin, TOT, prob.
   indexStat <- 1
   indexStates <- 1
   indexMu <- 1
-  indexGa <- 1
   indexBeta <- 1
+  indexLoglik <- 1
   for (i in 1:k.max) {
     obj[[i]] <- list()
     obj[[i]]$stat <- res$stat[indexStat:(indexStat + i-1)]
@@ -251,12 +269,17 @@ MetropolisSweep.C <- function(y, x, k.max, Chrom, model=NULL, burnin, TOT, prob.
     obj[[i]]$sigma.2 <- matrix(res$sigma2[indexMu: (indexMu + res$times[i]*i -1)], ncol=i, byrow=TRUE)
     indexMu <-  indexMu + TOT*i
 
+    obj[[i]]$loglik <- res$loglik[indexLoglik:(indexLoglik +
+                                               res$times[i] -1)]
+    indexLoglik <- indexLoglik + TOT
     obj[[i]]$beta <- array(res$beta[indexBeta: (indexBeta + res$times[i]*i*i-1)], dim=c(i, i, res$times[i]))
     indexBeta <- indexBeta + TOT*i*i
     if (burnin >0) {
       obj[[i]]$mu <- matrix(obj[[i]]$mu[-c(1:res$burninTimes[i]),], ncol=i)
       obj[[i]]$sigma.2 <- matrix(obj[[i]]$sigma.2[-c(1:res$burninTimes[i]),], ncol=i)
-      obj[[i]]$beta <- array(obj[[i]]$beta[,,-c(1:res$burninTimes[i])], dim=c(i,i, res$times[i] - res$burninTimes[i]))
+      obj[[i]]$beta <-
+        array(obj[[i]]$beta[,,-c(1:res$burninTimes[i])], dim=c(i,i, res$times[i] - res$burninTimes[i]))
+      obj[[i]]$loglik <- obj[[i]]$loglik[-c(1:res$burninTimes[i])]
     }
     indexStat <- indexStat + i
     if (nrow(obj[[i]]$mu) > 0) {
@@ -629,17 +652,23 @@ states.RJaCGH <- function(obj, k=NULL) {
   res$prob.states <- obj[[k]]$prob.states
 
   ## Region of normal, gain and loss
-  ref <- as.numeric(names(which.max(table(res$states))))
-  colnames(res$prob.states) <- 1:k
-  colnames(res$prob.states)[ref] <- "Normal"
-  levels(res$states)[ref] <- "Normal"
-  if (ref < k) {
-    colnames(res$prob.states)[(ref+1):k] <- paste("Gain", 1:(k-ref), sep="-")
-    levels(res$states)[(ref+1):k] <- paste("Gain", 1:(k-ref), sep="-")
+  if (is.null(obj[[k]]$state.classes)) {
+    ref <- as.numeric(names(which.max(table(res$states))))
+    colnames(res$prob.states) <- 1:k
+    colnames(res$prob.states)[ref] <- "Normal"
+    levels(res$states)[ref] <- "Normal"
+    if (ref < k) {
+      colnames(res$prob.states)[(ref+1):k] <- paste("Gain", 1:(k-ref), sep="-")
+      levels(res$states)[(ref+1):k] <- paste("Gain", 1:(k-ref), sep="-")
+    }
+    if (ref > 1) {
+      colnames(res$prob.states)[1:(ref-1)] <- paste("Loss", (ref-1):1, sep="-")
+      levels(res$states)[1:(ref-1)] <- paste("Loss", (ref-1):1, sep="-")
+    }
   }
-  if (ref > 1) {
-    colnames(res$prob.states)[1:(ref-1)] <- paste("Loss", (ref-1):1, sep="-")
-    levels(res$states)[1:(ref-1)] <- paste("Loss", (ref-1):1, sep="-")
+  else {
+    colnames(res$prob.states) <- obj[[k]]$state.classes
+    levels(res$states) <- obj[[k]]$state.classes
   }
   res
 }
@@ -1083,7 +1112,7 @@ trace.plot <- function(obj, k=NULL, array=NULL, Chrom=NULL, main.text=NULL) {
     if (is.null(k)) k <- as.numeric(names(which.max(table(obj$k))))
     par(mfrow=c(2, 2))
     matplot(as.numeric(as.character(obj$k)), pch=16, cex=0.2, main="Trace plot of number of states",
-         xlab="iteration", ylab="Number of states")
+         xlab="iteration", ylab="Number of states", type="l")
     matplot(obj[[k]]$mu, type="l", main="Trace plot of means", xlab="iteration",
            ylab="Mean of states")
     matplot(obj[[k]]$sigma.2, type="l", main="Trace plot of variance", xlab="iteration",
@@ -1399,7 +1428,7 @@ get.jump <- function(y, x, Chrom, model, k.max=6,
 
     sigma.tau.mu.max <- lim / k
     sigma.tau.mu.min <- 0.0001
-    sigma.tau.sigma.2.max <- lim / k^2
+    sigma.tau.sigma.2.max <- lim / k
     sigma.tau.sigma.2.min <- 0.0001
     sigma.tau.beta.max <- lim
     sigma.tau.beta.min <- 0.0001
@@ -1412,7 +1441,6 @@ get.jump <- function(y, x, Chrom, model, k.max=6,
     
     ## Check if min == max
   while ((!p.mu | !p.sigma.2 | !p.beta) & tries < 5) {
-    
     fit <- MetropolisSweep.C(y=y, x=x, k.max=k.max, Chrom=Chrom,
                            model=model, burnin=0, TOT=500,
                            prob.k=prob.k, pb=pb, ps=ps, g=g,
@@ -1511,3 +1539,14 @@ viterbi.C <- function(y, x=NULL, Chrom=NULL, mu, sigma.2, beta, stat=NULL) {
   states
 }
 
+akaike <- function(logliks, param=NULL) {
+  if (is.null(param)) {
+    param <- 1:length(logliks)
+    param <- 2 * param + param * (param-1)
+  }
+  AIC <- -2*logliks + 2*param
+  AIC <- AIC - min(AIC)
+  akaike <- exp(-0.5*AIC)
+  akaike <- akaike / sum(akaike)
+  akaike
+}

@@ -135,6 +135,7 @@ g = NULL, prob.k = NULL, jump.parameters=list(), start.k = NULL, RJ=TRUE)
   \item{sigma.2}{a matrix with the variances sampled}
   \item{beta}{an array of dimension 3 with beta values sampled}
   \item{stat}{vector of initial distribution}
+  \item{loglik}{log likelihoods of every MCMC iteration}
   \item{prob.mu}{probability of aceptance of \code{mu} in the
     Metropolis-Hastings step.}
   \item{prob.sigma.2}{probability of aceptance of \code{sigma.2} in the
