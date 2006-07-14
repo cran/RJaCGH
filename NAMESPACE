@@ -1,0 +1,29 @@
+useDynLib(RJaCGH)
+
+export("gelman.brooks.plot", "model.averaging",
+       "normal.HMM.likelihood.NH.C",
+       "Q.NH", "plot.Q.NH", "RJaCGH", "simulateRJaCGH",
+       "states", "trace.plot", "collapseChain"
+       )
+
+
+S3method(summary, RJaCGH)
+S3method(summary, RJaCGH.Chrom)
+S3method(summary, RJaCGH.genome)
+S3method(summary, RJaCGH.array)
+S3method(states, RJaCGH)
+S3method(states, RJaCGH.Chrom)
+S3method(states, RJaCGH.genome)
+S3method(states, RJaCGH.array)
+S3method(model.averaging, RJaCGH)
+S3method(model.averaging, RJaCGH.Chrom)
+S3method(model.averaging, RJaCGH.genome)
+S3method(model.averaging, RJaCGH.array)
+S3method(plot, RJaCGH)
+S3method(plot, RJaCGH.Chrom)
+S3method(plot, RJaCGH.genome)
+S3method(plot, RJaCGH.array)
+S3method(collapseChain, RJaCGH)
+S3method(collapseChain, RJaCGH.Chrom)
+S3method(collapseChain, RJaCGH.genome)
+S3method(collapseChain, RJaCGH.array)
