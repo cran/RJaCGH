@@ -12,9 +12,9 @@
 }
 \usage{
 chainsSelect(obj, nutrim=4, trim=NULL)
-chainsSelect.RJaCGH(obj, nutrim=4, trim=NULL)
-chainsSelect.RJaCGH.genome(obj, nutrim = 4, trim = NULL)
-chainsSelect.RJaCGH.array(obj, nutrim = 4, trim = NULL)
+\method{chainsSelect}{RJaCGH}(obj, nutrim=4, trim=NULL)
+\method{chainsSelect}{RJaCGH.genome}(obj, nutrim = 4, trim = NULL)
+\method{chainsSelect}{RJaCGH.array}(obj, nutrim = 4, trim = NULL)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -43,8 +43,12 @@ chainsSelect.RJaCGH.array(obj, nutrim = 4, trim = NULL)
 \value{
 A list of less elements of the same class as\code{obj}.
 }
-\references{Oscar Rueda and Ramon Diaz Uriarte, in prep.}
-\author{Oscar Rueda and Ramon Diaz Uriarte}
+\references{  Oscar M. Rueda and Ramon Diaz Uriarte. A flexible, accurate and
+  extensible statistical method for detecting genomic copy-number
+  changes. \url{http://biostats.bepress.com/cobra/ps/art9/}.
+  {http://biostats.bepress.com/cobra/ps/art9/}.
+}
+\author{Oscar M. Rueda and Ramon Diaz Uriarte}
 
 \seealso{\code{\link{RJaCGH}},
   \code{\link{summary.RJaCGH}}, \code{\link{model.averaging}},

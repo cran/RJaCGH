@@ -197,7 +197,7 @@ MetropolisSweep.C <- function(y, x, k.max, Chrom, model=NULL, burnin, TOT, prob.
   sigma.2 <- rep(0, size.sigma.2)
   beta <- rep(0, size.beta)
   probStates <- rep(0, n*(k.max^2 - k.max) / 2)
-  probJointStates <- rep(0, (n-1)*(k.max^2 + k.max -2) / 2)
+  freqJointStates <- rep(0, (n-1)*((k.max*(k.max+1)*(2*k.max+1)/6)-1))
   loglik <- rep(0, TOT * k.max)
   if (is.null(start.k)) start.k <- 0
 
@@ -230,7 +230,7 @@ MetropolisSweep.C <- function(y, x, k.max, Chrom, model=NULL, burnin, TOT, prob.
               stat=as.double(stat), startK=as.integer(start.k),
               RJ=as.integer(1*RJ), maxVar=as.double(maxVar),
               probStates=as.double(probStates),
-              probJointStates=as.double(probJointStates),
+              freqJointStates=as.double(freqJointStates),
               loglik=as.double(loglik))
   }
   else {
@@ -258,7 +258,7 @@ MetropolisSweep.C <- function(y, x, k.max, Chrom, model=NULL, burnin, TOT, prob.
               stat=as.double(stat), startK=as.integer(start.k),
               RJ=as.integer(1*RJ), maxVar=as.double(maxVar),
               probStates=as.double(probStates),
-              probJointStates=as.double(probJointStates),
+              freqJointStates=as.double(freqJointStates),
               loglik=as.double(loglik))
 
   }
@@ -298,19 +298,28 @@ MetropolisSweep.C <- function(y, x, k.max, Chrom, model=NULL, burnin, TOT, prob.
         obj[[i]]$prob.states <- matrix(obj[[i]]$prob.states, nrow=n, ncol=i-1)
         obj[[i]]$prob.states <- cbind(obj[[i]]$prob.states, 1 -
                                       rowSums(obj[[i]]$prob.states))
-        obj[[i]]$prob.joint.states <- res$probJointStates[indexJointStates : (indexJointStates +
-                                                              (n-1)*i -1)]
-        obj[[i]]$prob.joint.states <- matrix(obj[[i]]$prob.joint.states, nrow=n-1, ncol=i)
+        obj[[i]]$freq.joint.states <- list()
+        for (k in 1:i) {
+          obj[[i]]$freq.joint.states[[k]] <-
+            res$freqJointStates[indexJointStates: (indexJointStates +
+                                               (n-1)*i -1)]
+          obj[[i]]$freq.joint.states[[k]] <-
+            matrix(obj[[i]]$freq.joint.states[[k]], nrow=n-1, ncol=i)
+          indexJointStates <- indexJointStates + (n-1)*i
+        }
       }
       else {
         obj[[i]]$prob.states <- NULL
-        obj[[i]]$prob.joint.states <- NULL
+        obj[[i]]$freq.joint.states <- NULL
+        indexJointStates <- indexJointStates + (n-1)*i^2
       }
-      indexJointStates <- indexJointStates + (n-1)*(i)
     }
     else  {
       obj[[i]]$prob.states <- matrix(rep(1, length(y)), ncol=1)
-      obj[[i]]$prob.joint.states <- matrix(rep(1, length(y)-1), ncol=1)
+      obj[[i]]$freq.joint.states <- list()
+      ## it doesn't matter to compute joint probs.
+      ## so we take all ones
+      obj[[i]]$freq.joint.states[[1]] <- matrix(rep(1, length(y)-1), ncol=1)
     }
     
     indexStates <- indexStates + n*(i-1)
@@ -329,7 +338,6 @@ MetropolisSweep.C <- function(y, x, k.max, Chrom, model=NULL, burnin, TOT, prob.
   
   obj$k <- res$k[-c(1:(2*burnin+1))]
   obj$k <- factor(obj$k , levels=1:k.max)
-
   ## Relabel states
   p.labels <- 0.95 ## should be a parameter??
   for (i in 1:k.max) {
@@ -387,7 +395,6 @@ MetropolisSweep.C <- function(y, x, k.max, Chrom, model=NULL, burnin, TOT, prob.
       }
   
   ##
-
       
     }
   }    
@@ -425,7 +432,8 @@ RJMCMC.NH.HMM.Metropolis <- function(y, Chrom=NULL, x=NULL, index=NULL, model=NU
   times <- rep(2, k.max)
   res <- list()
   x.old <- x
-  if (is.null(x) | isTRUE(all.equal(x.old, rep(1, length(y)-1)))) {
+  ## if all distances are the same, they should be zero
+  if (is.null(x) | isTRUE(all.equal(min(x.old), max(x.old)))) {
     x <- rep(0, length(y)-1) ## zz:??? a "rep"?
   }
   ## Scale x'2 to avoid overflow
@@ -454,7 +462,7 @@ RJMCMC.NH.HMM.Metropolis <- function(y, Chrom=NULL, x=NULL, index=NULL, model=NU
   if (is.null(stat)) {
     for(i in 1:k.max)  stat <- c(stat, rep(1/i, i))
   }
-if(is.null(sigma.tau.mu) | is.null(sigma.tau.sigma.2) | is.null(sigma.tau.beta)
+  if(is.null(sigma.tau.mu) | is.null(sigma.tau.sigma.2) | is.null(sigma.tau.beta)
    | is.null(tau.split.mu) | is.null(tau.split.beta)) {
   cat("Searching jump parameters...\n")
   if(length(y) != (length(x) + 1))
@@ -495,10 +503,12 @@ RJaCGH.one.array <- function(y, Chrom=NULL, Pos=NULL, Dist=NULL, model="genome",
                              sigma.tau.mu, sigma.tau.sigma.2, sigma.tau.beta,
                              tau.split.mu, tau.split.beta,
                              start.k, RJ=RJ, auto.label=NULL) {
-
   ## Check that Positions are absolute and not relative
+  Pos.rel <- NULL
   if(!is.null(Pos)) {
     if (!is.null(Chrom) && any(diff(Pos)<0)) {
+      ## save relative positions for pMCR, plots, etc.
+      Pos.rel <- Pos
       last.Pos <- 0
       for (i in 2:length(Pos)) {
         if (Chrom[i] != Chrom[i-1]) {
@@ -514,13 +524,14 @@ RJaCGH.one.array <- function(y, Chrom=NULL, Pos=NULL, Dist=NULL, model="genome",
   if (is.null(Chrom)) {
     if (!is.null(Pos)) {
       chrom.Pos <- Pos
-      chrom.Dist <- diff(chrom.Pos) -1 
+      chrom.Dist <- diff(chrom.Pos) -1
     }
     else {
       chrom.Pos <- 1:length(y)
       chrom.Dist <- rep(0, length(y)-1)
     }
     if (!is.null(Dist)) chrom.Dist <- Dist
+
     res <- RJMCMC.NH.HMM.Metropolis(y=y, Chrom=rep(1, length(y)), x=chrom.Dist, burnin=burnin,
                                     TOT=TOT, k.max=k.max, stat=stat, mu.alfa=mu.alfa, mu.beta=mu.beta,
                                     ka=ka, g=g, prob.k=prob.k, sigma.tau.mu=sigma.tau.mu,
@@ -529,8 +540,9 @@ RJaCGH.one.array <- function(y, Chrom=NULL, Pos=NULL, Dist=NULL, model="genome",
                                     tau.split.mu=tau.split.mu,  
                                     tau.split.beta=tau.split.beta,
                                     start.k=start.k, RJ=RJ, auto.label=auto.label)
-      res$Pos <- chrom.Pos
-      res
+    res$Pos <- chrom.Pos
+    res$Pos.rel <- Pos.rel
+    res
     }
   else {
     if (!is.numeric(Chrom)) {
@@ -548,15 +560,20 @@ RJaCGH.one.array <- function(y, Chrom=NULL, Pos=NULL, Dist=NULL, model="genome",
         ## x should be preprocessed here
         if (is.null(Pos)) {
           chrom.Pos <- (1:length(y))[Chrom==i]
-          chrom.Dist <- rep(0, length(chrom.Pos - 1))
+          chrom.Dist <- rep(0, length(chrom.Pos) - 1)
         }
         else {
           chrom.Pos <- Pos[Chrom==i]
           chrom.Dist <- diff(chrom.Pos) - 1
           chrom.Dist[chrom.Dist<0] <- 0
         }
+        if (!is.null(Dist)) {
+          chrom.Dist <- Dist[Chrom==i]
+          if (length(chrom.Dist) == length(chrom.Pos)) chrom.Dist <-
+            chrom.Dist[-length(chrom.Dist)]
+          
+        }
         cat("Chromosome", i, "\n")
-        if (!is.null(Dist)) chrom.Dist <- Dist[Chrom==i]
         res[[i]] <-
           RJMCMC.NH.HMM.Metropolis(y=y[Chrom==i], Chrom=Chrom[Chrom==i], x=chrom.Dist, burnin=burnin,
                                    TOT=TOT, k.max=k.max, stat=stat, mu.alfa=mu.alfa, mu.beta=mu.beta,
@@ -567,6 +584,8 @@ RJaCGH.one.array <- function(y, Chrom=NULL, Pos=NULL, Dist=NULL, model="genome",
                                    tau.split.beta=tau.split.beta,
                                    start.k=start.k, RJ=RJ, auto.label=auto.label)
         res[[i]]$Pos <- chrom.Pos
+        if (!is.null(Pos.rel))
+          res[[i]]$Pos.rel <- Pos.rel[Chrom==i]
         class(res[[i]]) <- "RJaCGH"
 
       }
@@ -583,17 +602,19 @@ RJaCGH.one.array <- function(y, Chrom=NULL, Pos=NULL, Dist=NULL, model="genome",
     
     else {
       if (is.null(Pos)) {
-        Pos <- 1:length(y)
-        Dist <- rep(0, length(y)-1)
+        chrom.Pos <- 1:length(y)
+        chrom.Dist <- rep(0, length(y)-1)
       }
       else {
-        Dist <- diff(Pos) -1
+        chrom.Pos <- Pos
+        chrom.Dist <- diff(chrom.Pos) -1
         for (i in 1:23) 
-          Dist[Chrom==i][length(Dist[Chrom==i])] <- NA
-        Dist <- Dist[-length(Dist)]
+          chrom.Dist[Chrom==i][length(chrom.Dist[Chrom==i])] <- NA
+        chrom.Dist <- chrom.Dist[-length(chrom.Dist)]
       }
+      if (!is.null(Dist)) chrom.Dist <- Dist
       ## We'll have to take out the last Dist of every Chrom
-      res <- RJMCMC.NH.HMM.Metropolis(y=y, Chrom=Chrom, x=Dist, burnin=burnin, TOT=TOT,
+      res <- RJMCMC.NH.HMM.Metropolis(y=y, Chrom=Chrom, x=chrom.Dist, burnin=burnin, TOT=TOT,
                                       k.max=k.max, stat=stat, mu.alfa=mu.alfa, mu.beta=mu.beta,
                                       ka=ka, g=g, prob.k=prob.k, sigma.tau.mu=sigma.tau.mu,
                                       sigma.tau.sigma.2=sigma.tau.sigma.2,
@@ -601,7 +622,8 @@ RJaCGH.one.array <- function(y, Chrom=NULL, Pos=NULL, Dist=NULL, model="genome",
                                       tau.split.mu=tau.split.mu, 
                                       tau.split.beta=tau.split.beta,
                                       start.k=start.k, RJ=RJ, auto.label=auto.label)
-      res$Pos <- Pos
+      res$Pos <- chrom.Pos
+      res$Pos.rel <- Pos.rel
       res$model <- model
       res$Chrom <- Chrom
       class(res) <- "RJaCGH.genome"
@@ -622,7 +644,7 @@ RJaCGH <- function(y, Chrom=NULL, Pos=NULL, Dist=NULL, model="genome", burnin=10
   tau.split.beta <- jump.parameters$tau.split.beta
   ## Check if we have 1 array or several
   if(is.null(dim(y))) {
-    res <- RJaCGH.one.array(y, Chrom=Chrom, Pos=Pos, Dist=NULL, model=model, burnin=burnin, TOT=TOT, k.max=k.max,
+    res <- RJaCGH.one.array(y, Chrom=Chrom, Pos=Pos, Dist=Dist, model=model, burnin=burnin, TOT=TOT, k.max=k.max,
                             stat=stat, mu.alfa=mu.alfa, mu.beta=mu.beta,
                             ka=ka, g=g, prob.k=prob.k,
                             sigma.tau.mu=sigma.tau.mu, sigma.tau.sigma.2=sigma.tau.sigma.2,
@@ -638,20 +660,22 @@ RJaCGH <- function(y, Chrom=NULL, Pos=NULL, Dist=NULL, model="genome", burnin=10
       cat("array", colnames(y)[i], "\n")
       res[[colnames(y)[i]]] <-
         RJaCGH.one.array(y[,i], Chrom=Chrom,
-                         Pos=Pos, Dist=NULL, model=model, burnin=burnin, TOT=TOT, k.max=k.max,
+                         Pos=Pos, Dist=Dist, model=model, burnin=burnin, TOT=TOT, k.max=k.max,
                          stat=stat, mu.alfa=mu.alfa, mu.beta=mu.beta, ka=ka, g=g, prob.k=prob.k,
                          sigma.tau.mu=sigma.tau.mu, sigma.tau.sigma.2=sigma.tau.sigma.2, sigma.tau.beta=sigma.tau.beta,
                          tau.split.mu=tau.split.mu,
                          tau.split.beta=tau.split.beta,
                          start.k=start.k, RJ=RJ, auto.label=auto.label)
 
-      res$array.names[i] <- colnames(y)[i]
+
     }
+    res$array.names <- colnames(y)
     class(res) <- "RJaCGH.array"
     res
   }
      
 }
+
 summary.RJaCGH <- function(object, k=NULL, point.estimator="median", ...) {
   res <- list()
   res$y <- object$y
@@ -752,9 +776,10 @@ states.RJaCGH <- function(obj, k=NULL) {
   res$states <- apply(obj[[k]]$prob.states, 1, which.max)
   res$states <- factor(res$states, levels=1:k)
   res$prob.states <- obj[[k]]$prob.states
-  res$prob.joint.states <- obj[[k]]$prob.joint.states
 
-  ## Region of normal, gain and loss
+  res$freq.joint.states <- obj[[k]]$freq.joint.states
+  res$prob.cond.states <- obj[[k]]$freq.joint.states
+    ## Region of normal, gain and loss
   if (is.null(obj[[k]]$state.labels)) {
     ref <- as.numeric(names(which.max(table(res$states))))
     colnames(res$prob.states) <- 1:k
@@ -773,8 +798,21 @@ states.RJaCGH <- function(obj, k=NULL) {
     colnames(res$prob.states) <- obj[[k]]$state.labels
     levels(res$states) <- obj[[k]]$state.labels
   }
-  colnames(res$prob.joint.states) <- colnames(res$prob.states)
-  res <- list(states=res$states, prob.states=res$prob.states)
+  names(res$freq.joint.states) <- colnames(res$prob.states)
+  names(res$prob.cond.states) <- colnames(res$prob.states)
+  for(i in 1:k) {
+    res$prob.cond.states[[i]] <- matrix(rbind(apply(res$freq.joint.states[[i]], 1,
+                                       function(x) {
+                                         if(sum(x)>0) x / sum(x)
+                                         else rep(0, k)
+                                       })), ncol=k)
+
+    colnames(res$prob.cond.states[[i]]) <- colnames(res$prob.states)
+    colnames(res$freq.joint.states[[i]]) <- colnames(res$prob.states)
+  }
+  res <- list(states=res$states, prob.states=res$prob.states,
+              freq.joint.states= res$freq.joint.states,
+              prob.cond.states=res$prob.cond.states)
 }
 
 states.RJaCGH.Chrom <- function(obj, k=NULL) {
@@ -811,44 +849,39 @@ model.averaging.RJaCGH <-function(obj) {
   Loss <- rep(0, n)
   Normal <- rep(0, n)
   Gain <- rep(0, n)
-  joint.Loss <- rep(0, n-1)
-  joint.Normal <- rep(0, n-1)
-  joint.Gain <- rep(0, n-1)
-
+  
   k.max <- max(as.numeric(as.character(obj$k)))
   for (i in 1:k.max) {
+
     if (probs[i] > 0) {
       objSummary <- states(obj, i)
       prob.states <- objSummary$prob.states
-##      prob.joint.states <- objSummary$prob.joint.states
       for (j in 1:i) {
         if (length(grep("[L]", colnames(prob.states)[j]))) {
           Loss <- Loss + probs[i] * prob.states[,j]
-##          joint.Loss <- joint.Loss + probs[i] * prob.joint.states[,j]
         }
         else if (length(grep("[N]", colnames(prob.states)[j]))) {
           Normal <- Normal + probs[i] * prob.states[,j]
-##          joint.Normal <- joint.Normal + probs[i] * prob.joint.states[,j]
         }
         else if (length(grep("[G]", colnames(prob.states)[j]))) {
           Gain <- Gain + probs[i] * prob.states[,j]
-##          joint.Gain <- joint.Gain + probs[i] * prob.joint.states[,j]
         }
       }
     }
   }
+  
   res$prob.states <- cbind(Loss, Normal, Gain)
-  ##res$prob.joint.states <- cbind(joint.Loss, joint.Normal, joint.Gain)
   colnames(res$prob.states) <- c("Loss", "Normal", "Gain")
-  ##colnames(res$prob.joint.states) <- c("Loss", "Normal", "Gain")
   res$states <- apply(res$prob.states, 1, function(x) names(which.max(x)))
   res$states <- ordered(res$states, levels=c("Loss", "Normal", "Gain"))
   res <- list(states=res$states, prob.states=res$prob.states)
+
+
 }
 
 model.averaging.RJaCGH.Chrom <-function(obj) {
   res <- list()
-  for (ch in 1:23) {
+  for (ch in unique(obj$Chrom)) {
     res[[ch]] <- model.averaging(obj[[ch]])
   }
   res
@@ -861,35 +894,26 @@ model.averaging.RJaCGH.genome <- function(obj) {
   Loss <- rep(0, n)
   Normal <- rep(0, n)
   Gain <- rep(0, n)
-  joint.Loss <- rep(0, n-1)
-  joint.Normal <- rep(0, n-1)
-  joint.Gain <- rep(0, n-1)
   k.max <- max(as.numeric(as.character(obj$k)))  
   for (i in 1:k.max) {
     if (probs[i] > 0) {
       objSummary <- states(obj, i)
       prob.states <- objSummary$prob.states
-    ##  prob.joint.states <- objSummary$prob.joint.states
       for (j in 1:i) {
         if (length(grep("[L]", colnames(prob.states)[j]))) {
           Loss <- Loss + probs[i] * prob.states[,j]
-      ##    joint.Loss <- joint.Loss + probs[i] * prob.joint.states[,j]
         }
         else if (length(grep("[N]", colnames(prob.states)[j]))) {
           Normal <- Normal + probs[i] * prob.states[,j]
-        ##  joint.Normal <- joint.Normal + probs[i] * prob.joint.states[,j]
         }
         else if (length(grep("[G]", colnames(prob.states)[j]))) {
           Gain <- Gain + probs[i] * prob.states[,j]
-        ##  joint.Gain <- joint.Gain + probs[i] * prob.joint.states[,j]
         }
       }
     }
   }
   res$prob.states <- cbind(Loss, Normal, Gain)
-  ##res$prob.joint.states <- cbind(joint.Loss, joint.Normal, joint.Gain)
   colnames(res$prob.states) <- c("Loss", "Normal", "Gain")
-  ##colnames(res$prob.joint.states) <- c("Loss", "Normal", "Gain")
   res$states <- apply(res$prob.states, 1, function(x) names(which.max(x)))
   res$states <- ordered(res$states, levels=c("Loss", "Normal", "Gain"))
   res <- list(states=res$states, prob.states=res$prob.states)
@@ -966,7 +990,7 @@ plot.RJaCGH <- function(x, k=NULL, model.averaging=TRUE, cex=1, ...)  {
 }
 
 plot.RJaCGH.Chrom <- function(x, Chrom="genome",
-                              model.averaging=TRUE, cex=1, ...)  {
+                              model.averaging=TRUE, cex=1, k=NULL,...)  {
 
   if (Chrom=="genome") {
     states <- NULL
@@ -975,7 +999,7 @@ plot.RJaCGH.Chrom <- function(x, Chrom="genome",
       res <- model.averaging(x)
     }
     else {
-      res <- states(x)
+      res <- states(x,k=k)
     }
     max.levels <- lapply(res, function(x) levels(x$states))
     max.levels <- names(table(unlist(max.levels)))
@@ -1020,7 +1044,7 @@ plot.RJaCGH.Chrom <- function(x, Chrom="genome",
   }
   else {
     if (Chrom=="X" || Chrom=="Y") Chrom==23
-    plot(x[[Chrom]], model.averaging=model.averaging, cex=cex)
+    plot(x[[Chrom]], model.averaging=model.averaging, cex=cex, k=k)
   }
 }
 
@@ -1266,12 +1290,12 @@ trace.plot <- function(obj, k=NULL, array=NULL, Chrom=NULL, main.text=NULL) {
   }
   if(class(obj)=="RJaCGH.Chrom") {
     main.text <- paste("Chromosome", Chrom, ".")
-    diagnostic.plot(obj[[Chrom]], main.text=main.text)
+    trace.plot(obj[[Chrom]], main.text=main.text)
   }
 
   if(class(obj)=="RJaCGH.array") {
     main.text <- past("Array", array, ". Chromosome", Chrom, ".")
-    diagnostic.plot(obj[[array]], chrom=chrom)
+    trace.plot(obj[[array]], chrom=chrom, main.text=main.text)
   }
 }
 
@@ -1463,8 +1487,11 @@ collapseChain.RJaCGH <- function(obj) {
     newobj[[i]]$loglik <- NULL
     newobj[[i]]$prob.states <- matrix(0, nrow=length(obj[[1]]$y),
   ncol=i)
-    newobj[[i]]$prob.joint.states <- matrix(0,
-  nrow=length(obj[[1]]$y)-1, ncol=i)
+    newobj[[i]]$freq.joint.states <- list()
+    for (j in 1:i) {
+      newobj[[i]]$freq.joint.states[[j]] <-
+        matrix(0,nrow=length(obj[[1]]$y)-1, ncol=i)
+    }
     newobj[[i]]$state.labels <- NULL
   }
   newobj$prob.b <- 0
@@ -1488,16 +1515,21 @@ collapseChain.RJaCGH <- function(obj) {
       newobj[[j]]$loglik <- c(newobj[[j]]$loglik,
                               obj[[i]][[j]]$loglik)
 
-        ##
+     
       if (!is.null(obj[[i]][[j]]$prob.states)) {
         newobj[[j]]$prob.states <- newobj[[j]]$prob.states + 
           obj[[i]][[j]]$prob.states * nrow(obj[[i]][[j]]$mu)
-        newobj[[j]]$prob.joint.states <- newobj[[j]]$prob.joint.states + 
-          obj[[i]][[j]]$prob.joint.states * nrow(obj[[i]][[j]]$mu)
+        for (m in 1:j) {
+          newobj[[j]]$freq.joint.states[[m]] <- newobj[[j]]$freq.joint.states[[m]] + 
+          obj[[i]][[j]]$freq.joint.states[[m]]
+        }
       }
       else {
         newobj[[j]]$prob.states <- newobj[[j]]$prob.states
-        newobj[[j]]$prob.joint.states <- newobj[[j]]$prob.joint.states
+        for (m in 1:j) {
+          newobj[[j]]$freq.joint.states[[m]] <-
+            newobj[[j]]$freq.joint.states[[m]]
+        }
       }
     }
   }
@@ -1516,12 +1548,10 @@ collapseChain.RJaCGH <- function(obj) {
     if(nrow(newobj[[j]]$mu)) {
       newobj[[j]]$prob.states <- newobj[[j]]$prob.states /
         nrow(newobj[[j]]$mu)
-      newobj[[j]]$prob.joint.states <- newobj[[j]]$prob.joint.states /
-        nrow(newobj[[j]]$mu)
     }
     else {
       newobj[[j]]$prob.states <- NULL
-      newobj[[j]]$prob.joint.states <- NULL
+      newobj[[j]]$freq.joint.states <- NULL
     }
   }
   newobj$k <- factor(newobj$k, levels=1:k)
@@ -1598,7 +1628,7 @@ collapseChain.RJaCGH.genome <- function(obj) {
 collapseChain.RJaCGH.Chrom <- function(obj) {
   C <- length(obj)
   newobj <- list()
-  for (i in 1:23) {
+  for (i in unique(obj[[1]]$Chrom)) {
     obj.temp <- list()
     for (j in 1:C) {
       obj.temp[[j]] <- obj[[j]][[i]]
@@ -1958,575 +1988,726 @@ akaike <- function(logliks, param=NULL) {
 ## o3 <- chainsSelect(fit.chrom)
 ## o4 <- chainsSelect(fit.genome)
 
-## MCR <- function(obj, p, method, model.averaging=TRUE, alteration="Gain",
-##                 array.weights=NULL, array.freq=0.5) {
-##   UseMethod("MCR")
-## }
-
-## MCR.RJaCGH <- function(obj, p, method, model.averaging=TRUE, alteration="Gain",
-##                        array.weights=NULL) {
-##   if (alteration !="Gain" && alteration!="Loss")
-##     stop ("'alteration' must be either 'Gain' or 'Loss'")
-
-##   n <- length(obj$y)
-##   regions <- list()
-##   counter <- 1
-##   i <- 1
-##   ## First, we relabel the joint probabilities according to the states
-##   ## First, only for gains
-##   avg <- model.averaging(obj)
-##   marginal.probs <- avg$prob.states[, alteration]
-##   joint.probs <- avg$prob.joint.states[, alteration]
-##   while (i <=n) {
-##     if (marginal.probs[i] >= p) {
-##       regions[[counter]] <- list()
-##       regions[[counter]]$start <- obj$Pos[i]
-##       regions[[counter]]$end <- obj$Pos[i]
-##       regions[[counter]]$prob <- marginal.probs[i]
-##       while (i < n && regions[[counter]]$prob * joint.probs[i] >=p) {
-##         regions[[counter]]$end <- obj$Pos[i+1]
-##         regions[[counter]]$prob <- regions[[counter]]$prob * joint.probs[i]
-##         i <- i + 1
-##       }
-##       counter <- counter + 1
-##     }
-##     i <- i +1
-##   }
-##   attr(regions, "alteration") <- alteration
-##   class(regions) <- "MCR.RJaCGH"
-##   regions
-## }
-
-## MCR.RJaCGH.Chrom <- function(obj, p, method, model.averaging=TRUE, alteration="Gain",
-##                        array.weights=NULL) {
-##   if (alteration !="Gain" && alteration!="Loss") 
-##     stop ("'alteration' must be either 'Gain' or 'Loss'")
-
-##   avg <- model.averaging(obj)
-##   regions <- list()
-##   for (chr in unique(obj$Chrom)) {
-##     marginal.probs <- avg[[chr]]$prob.states[, alteration]
-##     joint.probs <- avg[[chr]]$prob.joint.states[, alteration]
-##     n <- length(obj[[chr]]$y)
-##     regions[[chr]] <- list()
-##     attr(regions[[chr]], "Chrom") <- chr
-##     counter <- 1
-##     i <- 1
-##     ## First, we relabel the joint probabilities according to the states
-##     ## First, only for gains
-##     while (i <=n) {
-##       if (marginal.probs[i] >= p) {
-##         regions[[chr]][[counter]] <- list()
-##         regions[[chr]][[counter]]$start <- obj$Pos[chr][i]
-##         regions[[chr]][[counter]]$end <- obj$Pos[chr][i]
-##         regions[[chr]][[counter]]$prob <-
-##           marginal.probs[i]
-##         while (i <n &&
-##                regions[[chr]][[counter]]$prob * joint.probs[i] >=p) {
-##           regions[[chr]][[counter]]$end <- obj$Pos[chr][i+1]
-##           regions[[chr]][[counter]]$prob <-
-##             regions[[chr]][[counter]]$prob * joint.probs[i]
-##           i <- i + 1
-##         }
-##       counter <- counter + 1
-##       }
-##       i <- i +1
-##     }
-##   }
-##   attr(regions, "alteration") <- alteration
-##   class(regions) <- "MCR.RJaCGH.Chrom"
-##   regions
-## }
 
 
-## MCR.RJaCGH.genome <- function(obj, p, method, model.averaging=TRUE, alteration="Gain",
-##                        array.weights=NULL) {
-##   if (alteration !="Gain" && alteration!="Loss") 
-##     stop ("'alteration' must be either 'Gain' or 'Loss'")
+#######################################################################################
+#######################################################################################
+## Minimal Common Regions (MCR)
+## For now, only BMA
+#######################################################################################
+## Speed up: states as an argument
+## or only compute them one time.
+prob.seq <- function(obj, start, end, alteration="Gain") {
+  if (start > end)
+    stop("'start' must be an integer < than 'end'\n")
+  if (alteration!="Gain" && alteration!="Loss")
+    stop("'alteration' must be either 'Loss' or 'Gain'\n")
+  K <- max(as.numeric(as.character(levels(obj$k))))
+  n <- length(obj$y)
+  probs <- prop.table(table(obj$k))
+  prob.seq <- rep(0, K)
+  ## states probs
+  selected.states <- list()
+  inds <- list()
+  ## First gene: marginal prob.
+  for (j in 1:K) {
+    if(probs[j] > 0) {
+      selected.states[[j]] <- states(obj,k=j)
+      prob.states <- selected.states[[j]]$prob.states[start,]
+      inds[[j]] <- grep(paste("[", substr(alteration, 1, 1), "]"), names(prob.states))
+      if (length(inds[[j]]) > 0) {
+          prob.seq[j] <- sum(prob.states[inds[[j]]])
+      }
+    }
+  }
+  if (end > start) {
+    for(i in start:(end-1)) {
+      for (j in 1:K) {
+        if(probs[j] > 0) {
+          if (length(inds[[j]]) > 0) {
+            ## Conditional probs.
+            freqs <- selected.states[[j]]$freq.joint.states[inds[[j]]]
+            freqs <- lapply(freqs, function(x) x[i,])
+            freqs <- apply(do.call("rbind", freqs), 2, sum)
+            if(sum(freqs>0))
+              prob.cond <- freqs / sum(freqs)
+            ## is not a probability measure
+            else
+              prob.cond <- rep(0, j)
+            prob.seq[j] <- prob.seq[j] * sum(prob.cond[inds[[j]]])
+          }
+        }
+      }
+    }
+  }
+  prob.seq <- as.numeric(prob.seq %*% probs)
+  prob.seq
+}
+    
 
-##   avg <- model.averaging(obj)
-##   marginal.probs <- avg$prob.states[, alteration]
-##   joint.probs <- avg$prob.joint.states[, alteration]
-  
-##   regions <- list()
-##   for (chr in unique(obj$Chrom)) {
-##     n <- length(obj$y[obj$Chrom == chr])
-##     regions[[chr]] <- list()
-##     attr(regions[[chr]], "Chrom") <- chr
-##     counter <- 1
-##     i <- 1
-##     ## First, we relabel the joint probabilities according to the states
-##     ## First, only for gains
-##     while (i <=n) {
-##       if (marginal.probs[obj$Chrom==chr][i] >= p) {
-##         regions[[chr]][[counter]] <- list()
-##         regions[[chr]][[counter]]$start <- obj$Pos[obj$Chrom==chr][i]
-##         regions[[chr]][[counter]]$end <- obj$Pos[obj$Chrom==chr][i]
-##         regions[[chr]][[counter]]$prob <-
-##           marginal.probs[obj$Chrom==chr][i]
-##         while (i <n &&
-##                regions[[chr]][[counter]]$prob * joint.probs[obj$Chrom==chr][i] >=p) {
-##           regions[[chr]][[counter]]$end <- obj$Pos[obj$Chrom==chr][i+1]
-##           regions[[chr]][[counter]]$prob <-
-##             regions[[chr]][[counter]]$prob * joint.probs[obj$Chrom==chr][i]
-##           i <- i + 1
-##         }
-##       counter <- counter + 1
-##       }
-##       i <- i +1
-##     }
-##   }
-##   attr(regions, "alteration") <- alteration
-##   class(regions) <- "MCR.RJaCGH.genome"
-##   regions
-## }
+## Only with model.averaging (for now)
+pMCR <- function(obj, p, alteration="Gain", 
+                array.weights=NULL) {
+  UseMethod("pMCR")
+}
 
+pMCR.RJaCGH <- function(obj, p, alteration="Gain", 
+                       array.weights=NULL) {
+  if (alteration !="Gain" && alteration!="Loss")
+    stop ("'alteration' must be either 'Gain' or 'Loss'")
+  if (!is.null(obj$Pos.rel))
+    Pos <- obj$Pos.rel
+  else
+    Pos <- obj$Pos
+  n <- length(obj$y)
+  regions <- list()
+  counter <- 1
+  i <- 1
+  marginal.probs <- model.averaging(obj)$prob.states[,alteration]
+  while (i <=n) {
+    prob <- marginal.probs[i]
+    if (prob >= p) {
+      regions[[counter]] <- list()
+      regions[[counter]]$start <- Pos[i]
+      regions[[counter]]$indexStart <- i
+      regions[[counter]]$indexEnd <- i
+      regions[[counter]]$end <- Pos[i]
+      regions[[counter]]$genes <- 1
+      regions[[counter]]$prob <- prob
+      if (i <n) {
+        prob <- prob.seq(obj, start=regions[[counter]]$indexStart,
+                         end=regions[[counter]]$indexEnd + 1, alteration=alteration)
 
-## ##What about joint prob of all regions (chrom/genome)?
+        while (i < n && prob >=p) {
+          regions[[counter]]$end <- Pos[i+1]
+          regions[[counter]]$indexEnd <- i + 1
+          regions[[counter]]$genes <- regions[[counter]]$genes + 1
+          regions[[counter]]$prob <- prob
+          if (regions[[counter]]$indexEnd < n) {
+            prob <- prob.seq(obj, start=regions[[counter]]$indexStart,
+                             end=regions[[counter]]$indexEnd + 1, alteration=alteration)
+          }
+          i <- i + 1
+        }
+      }
+      counter <- counter + 1
+    }
+    i <- i + 1
+  }
 
+  attr(regions, "alteration") <- alteration
+  class(regions) <- "pMCR.RJaCGH"
+  regions
+}
 
-## MCR.RJaCGH.array <- function(obj, p, method="global", model.averaging=TRUE,
-##                              alteration="Gain", array.weights=NULL, array.freq=0.5) {
-##   if (method=="global") {
-##     regions <- MCR.RJaCGH.array.global(obj, p, model.averaging,
-##                              alteration, array.weights)
-##     attr(regions, "alteration") <- alteration
-##   }
-
-##   else if (method=="individual") {
-##     regions <- MCR.RJaCGH.array.individual(obj, p, model.averaging,
-##                              alteration, array.weights, array.freq)
-##     attr(regions, "alteration") <- alteration
-##   }
-##   else stop("'method' must be 'global' or 'individual'\n")
-##   regions
-## }
-
-## MCR.RJaCGH.array.global <- function(obj, p, model.averaging=TRUE,
-##                              alteration="Gain",
-##                              array.weights=NULL) {
-
-##   if (alteration !="Gain" && alteration!="Loss")
-##     stop ("'alteration' must be either 'Gain' or 'Loss'")
-##   if (is.null(array.weights)) array.weights <- rep(1/length(obj$array.names),
-##                                                      length(obj$array.names))
-##   ar.name <- obj$array.names[[1]]
-##   ## ##########################################
-##   ## Model == genome
-##   if (class(obj[[ar.name]]) == "RJaCGH.genome") {
-##     Chromosomes <- obj[[ar.name]]$Chrom
-##     avg <- model.averaging(obj)
-##     marginal.probs <- lapply(avg, function(x, alteration)
-##                              x$prob.states[, alteration], alteration)
-##     joint.probs <- lapply(avg, function(x, alteration)
-##                           x$prob.joint.states[, alteration], alteration)
-##     regions <- list()
-##     for (chr in unique(obj[[ar.name]]$Chrom)) {
-##       ## We take the first array for reference (length, Position...)
-##       n <- length(obj[[ar.name]]$y[Chromosomes==chr])
-##       regions[[chr]] <- list()
-##       attr(regions[[chr]], "Chrom") <- chr
-##       counter <- 1
-##       i <- 1
-##       ## First, we relabel the joint probabilities according to the states
-##       ## First, only for gains
-##       while (i <=n) {
-##         prob.temp <- sapply(marginal.probs, function(x)
-##                             x[Chromosomes==chr][i])
-##         prob.temp <- sum(prob.temp * array.weights)
-##         if (prob.temp >= p) {
-##           index.start <- i
-##           regions[[chr]][[counter]] <- list()
-##           regions[[chr]][[counter]]$start <-
-##             obj[[ar.name]]$Pos[Chromosomes==chr][i]
-##           regions[[chr]][[counter]]$end <-
-##             obj[[ar.name]]$Pos[Chromosomes== chr][i]
-##           regions[[chr]][[counter]]$prob <- prob.temp
-##           prob.temp <- mapply(function(x,y,i) {
-##             x[Chromosomes==chr][i] * y[Chromosomes==chr][i]
-##           }, x=marginal.probs, y=joint.probs, i=i)
-##           while (i < n && sum(prob.temp * array.weights) >=p) {
-##             regions[[chr]][[counter]]$end <- obj[[ar.name]]$Pos[Chromosomes==chr][i+1]
-##             regions[[chr]][[counter]]$prob <- sum(prob.temp * array.weights)
-##             i <- i + 1
-##             prob.temp <- mapply(function(x,y,i) {
-##               x[Chromosomes==chr][index.start] * prod(y[Chromosomes==chr][index.start:i])
-##             }, x=marginal.probs, y=joint.probs, i=i)
+##   ## #####################################################
+##   ##   ## Experimental. If two regions collapse, we try to get
+##   ##   ## the partition with highest posterior probability
+##   if (test) { 
+##     if (length(regions) > 1) {
+##       for(i in 2:length(regions)) {
+##         if (regions[[i-1]]$genes > 1 &&
+##             regions[[i-1]]$indexEnd +1 == regions[[i]]$indexStart) {
+##           newprob2 <- marginal.probs[regions[[i-1]]$indexEnd] *
+##             prod(joint.probs[regions[[i-1]]$indexEnd:(regions[[i]]$indexEnd-1)])
+##           newprob1 <- marginal.probs[regions[[i-1]]$indexStart]
+##           if (regions[[i-1]]$genes > 2) {
+##             newprob1 <- newprob1 *
+##               prod(joint.probs[regions[[i-1]]$indexStart :
+##                                (regions[[i-1]]$indexEnd - 2)])
 ##           }
-##           counter <- counter + 1
-##         }
-##         i <- i +1
-##       }
-##     }
-##     class(regions) <- "MCR.RJaCGH.array.global"
-##   }
-##   ## ##########################################
-##   ## Model == Chromosome
-##   else if (class(obj[[ar.name]]) == "RJaCGH.Chrom") {
-##     regions <- list()
-##     avg <- model.averaging(obj)
-##     for (chr in unique(obj[[ar.name]]$Chrom)) {
-##       ## We take the first array for reference (length, Position...)
-##       n <- length(obj[[ar.name]][[chr]]$y)
-##       regions[[chr]] <- list()
-##       attr(regions[[chr]], "Chrom") <- chr
-##       counter <- 1
-##       i <- 1
-##       ## First, we relabel the joint probabilities according to the states
-##       marginal.probs <- lapply(avg, function(x, alteration)
-##                                x[[chr]]$prob.states[, alteration], alteration)
-##       joint.probs <- lapply(avg, function(x, alteration)
-##                             x[[chr]]$prob.joint.states[, alteration], alteration)
-##       while (i <=n) {
-##         prob.temp <- sapply(marginal.probs, function(x) x[i])
-##         prob.temp <- sum(prob.temp * array.weights)
-##         if (prob.temp >= p) {
-##           index.start <- i
-##           regions[[chr]][[counter]] <- list()
-##           regions[[chr]][[counter]]$start <- obj[[ar.name]][[chr]]$Pos[i]
-##           regions[[chr]][[counter]]$end <- obj[[ar.name]][[chr]]$Pos[i]
-##           regions[[chr]][[counter]]$prob <- prob.temp
-##           prob.temp <- mapply(function(x,y,i) {
-##             x[i] * y[i]
-##           }, x=marginal.probs, y=joint.probs, i=i)
-##           while (i < n && sum(prob.temp * array.weights) >=p) {
-##             regions[[chr]][[counter]]$end <- obj[[ar.name]][[chr]]$Pos[i+1]
-##             regions[[chr]][[counter]]$prob <- sum(prob.temp * array.weights)
-##             i <- i + 1
-##             prob.temp <- mapply(function(x,y,i) {
-##               x[index.start] * prod(y[index.start:i])
-##             }, x=marginal.probs, y=joint.probs, i=i)
-##           }
-##           counter <- counter + 1
-##         }
-##         i <- i +1
-##       }
-##     }
-##     class(regions) <- "MCR.RJaCGH.array.global"
-##   }
-
-##   ## ##########################################
-##   ## Model == None (no Chromosome info)
-##   else if (class(obj[[ar.name]]) == "RJaCGH") {
-##     regions <- list()
-##     avg <- model.averaging(obj)
-##       ## We take the first array for reference (length, Position...)
-##       n <- length(obj[[ar.name]]$y)
-##       counter <- 1
-##       i <- 1
-##       ## First, we relabel the joint probabilities according to the states
-##       marginal.probs <- lapply(avg, function(x, alteration)
-##                                x$prob.states[, alteration], alteration)
-##       joint.probs <- lapply(avg, function(x, alteration)
-##                             x$prob.joint.states[, alteration], alteration)
-##       while (i <=n) {
-##         prob.temp <- sapply(marginal.probs, function(x) x[i])
-##         prob.temp <- sum(prob.temp * array.weights)
-##         if (prob.temp >= p) {
-##           index.start <- i
-##           regions[[counter]] <- list()
-##           regions[[counter]]$start <- obj[[ar.name]]$Pos[i]
-##           regions[[counter]]$end <- obj[[ar.name]]$Pos[i]
-##           regions[[counter]]$prob <- prob.temp
-##           prob.temp <- mapply(function(x,y,i) {
-##             x[i] * y[i]
-##           }, x=marginal.probs, y=joint.probs, i=i)
-##           while (i < n && sum(prob.temp * array.weights) >=p) {
-##             regions[[counter]]$end <- obj[[ar.name]]$Pos[i+1]
-##             regions[[counter]]$prob <- sum(prob.temp * array.weights)
-##             i <- i + 1
-##             prob.temp <- mapply(function(x,y,i) {
-##               x[index.start] * prod(y[index.start:i])
-##             }, x=marginal.probs, y=joint.probs, i=i)
-##           }
-##           counter <- counter + 1
-##         }
-##         i <- i +1
-##       }
-##     class(regions) <- "MCR.RJaCGH.array.noChrom.global"
-##   }
-##   regions
-## }
-
-## MCR.RJaCGH.array.individual <- function(obj, p, model.averaging=TRUE,
-##                              alteration="Gain",
-##                              array.weights=NULL, array.freq=0.5) {
-##   if (alteration !="Gain" && alteration!="Loss")
-##     stop ("'alteration' must be either 'Gain' or 'Loss'")
-##   if (is.null(array.weights)) array.weights <- rep(1/length(obj$array.names),
-##                                                      length(obj$array.names))
-##   ar.name <- obj$array.names[[1]]
-##   ## ##########################################
-##   ## Model == genome
-##   if (class(obj[[ar.name]]) == "RJaCGH.genome") {
-##     Chromosomes <- obj[[ar.name]]$Chrom
-##     avg <- model.averaging(obj)
-##     marginal.probs <- lapply(avg, function(x, alteration)
-##                              x$prob.states[, alteration], alteration)
-##     joint.probs <- lapply(avg, function(x, alteration)
-##                           x$prob.joint.states[, alteration], alteration)
-##     regions <- list()
-##     for (chr in unique(obj[[ar.name]]$Chrom)) {
-##       ## We take the first array for reference (length, Position...)
-##       n <- length(obj[[ar.name]]$y[Chromosomes==chr])
-##       regions[[chr]] <- list()
-##       attr(regions[[chr]], "Chrom") <- chr
-##       counter <- 1
-##       i <- 1
-##       ## First, we relabel the joint probabilities according to the states
-##       ## Check that it's similar to Rouveirol et al.
-##       while (i <=n) {
-##         prob.temp <- sapply(marginal.probs, function(x)
-##                             x[Chromosomes==chr][i])
-##         if (mean(prob.temp >= p) >= array.freq) {
-##           index.start <- i
-##           regions[[chr]][[counter]] <- list()
-##           regions[[chr]][[counter]]$start <-
-##             obj[[ar.name]]$Pos[Chromosomes==chr][i]
-##           regions[[chr]][[counter]]$end <-
-##             obj[[ar.name]]$Pos[Chromosomes== chr][i]
-##           arrays.selected <- prob.temp[prob.temp >=p]
-##           regions[[chr]][[counter]]$prob <-  data.frame(
-##                                                         arrays=names(arrays.selected),
-##                                                         prob=arrays.selected)
-          
-##           prob.temp <- mapply(function(x,y,i) {
-##             x[Chromosomes==chr][i] * y[Chromosomes==chr][i]
-##           }, x=marginal.probs, y=joint.probs, i=i)
-##           names(prob.temp) <- obj$array.names
-##           ## because we've lost 'em
-##           while (i < n && mean(prob.temp >=p)>= array.freq &&
-##                 isTRUE(all.equal(names(prob.temp[prob.temp >p]),
-##                 names(arrays.selected)))) {
-##             ## Check that we keep all the arrays
-##               regions[[chr]][[counter]]$end <- obj[[ar.name]]$Pos[Chromosomes==chr][i+1]
-##               regions[[chr]][[counter]]$prob <- data.frame(
-##                                                            arrays=names(arrays.selected),
-##                                                            prob=arrays.selected)
-##               i <- i + 1
-##               prob.temp <- mapply(function(x,y,i) {
-##                 x[Chromosomes==chr][index.start] * prod(y[Chromosomes==chr][index.start:i])
-##               }, x=marginal.probs, y=joint.probs, i=i)
-##               names(prob.temp) <- obj$array.names
+##           while ((newprob1 + newprob2) >
+##               (regions[[i-1]]$prob + regions[[i]]$prob) &&
+##               newprob2 >= p) { 
+##             ## Take into account Positions
+##             regions[[i-1]]$indexEnd <- regions[[i-1]]$indexEnd - 1
+##             regions[[i-1]]$end <- obj$Pos[regions[[i-1]]$indexEnd]
+##             regions[[i-1]]$genes <- regions[[i-1]]$genes - 1
+##             regions[[i-1]]$prob <- newprob1
+##             regions[[i]]$start <- regions[[i-1]]$end
+##             regions[[i]]$indexStart <- regions[[i]]$indexStart + 1
+##             regions[[i]]$genes <- regions[[i]]$genes + 1
+##             regions[[i]]$prob <- newprob2
+##             ## Try another join
+##             if (regions[[i-1]]$genes > 1) {
+##               newprob2 <- marginal.probs[regions[[i-1]]$indexEnd] *
+##                 prod(joint.probs[regions[[i-1]]$indexEnd:
+##                                  (regions[[i]]$indexEnd-1)])
+##               newprob1 <- marginal.probs[regions[[i-1]]$indexStart]
+##               if (regions[[i-1]]$genes > 2) {
+##                 newprob1 <- newprob1 *
+##                   prod(joint.probs[regions[[i-1]]$indexStart :
+##                                    (regions[[i-1]]$indexEnd - 2)])
+##               }
 ##             }
-##           counter <- counter + 1
-##         }
-##         i <- i +1
-##       }
-##     }
-##     class(regions) <- "MCR.RJaCGH.array.individual"
-##   }
-##   ## ##########################################
-##   ## Model == Chromosome
-##   else if (class(obj[[ar.name]]) == "RJaCGH.Chrom") {
-##     regions <- list()
-##     avg <- model.averaging(obj)
-##     for (chr in unique(obj[[ar.name]]$Chrom)) {
-##       ## We take the first array for reference (length, Position...)
-##       n <- length(obj[[ar.name]][[chr]]$y)
-##       regions[[chr]] <- list()
-##       attr(regions[[chr]], "Chrom") <- chr
-##       counter <- 1
-##       i <- 1
-##       ## First, we relabel the joint probabilities according to the states
-##       marginal.probs <- lapply(avg, function(x, alteration)
-##                                x[[chr]]$prob.states[, alteration], alteration)
-##       joint.probs <- lapply(avg, function(x, alteration)
-##                             x[[chr]]$prob.joint.states[, alteration], alteration)
-##       while (i <=n) {
-##         prob.temp <- sapply(marginal.probs, function(x) x[i])
-##         if (mean(prob.temp >= p)>=array.freq) {
-##           index.start <- i
-##           regions[[chr]][[counter]] <- list()
-##           regions[[chr]][[counter]]$start <- obj[[ar.name]][[chr]]$Pos[i]
-##           regions[[chr]][[counter]]$end <-
-##             obj[[ar.name]][[chr]]$Pos[i]
-##           arrays.selected <- prob.temp[prob.temp >=p]
-##           regions[[chr]][[counter]]$prob <-
-##             data.frame(arrays=names(arrays.selected), prob=arrays.selected)
-##           prob.temp <- mapply(function(x,y,i) {
-##             x[i] * y[i]
-##           }, x=marginal.probs, y=joint.probs, i=i)
-##           names(prob.temp) <- obj$array.names
-##           while (i < n && mean(prob.temp >=p)>=array.freq &&
-##                 isTRUE(all.equal(names(prob.temp[prob.temp>p]),
-##                 names(arrays.selected)))) {
-##             regions[[chr]][[counter]]$end <- obj[[ar.name]][[chr]]$Pos[i+1]
-##             regions[[chr]][[counter]]$prob <-
-##               data.frame(arrays=names(arrays.selected), prob=arrays.selected)
-##             i <- i + 1
-##             prob.temp <- mapply(function(x,y,i) {
-##               x[index.start] * prod(y[index.start:i])
-##             }, x=marginal.probs, y=joint.probs, i=i)
-##             names(prob.temp) <- obj$array.names
 ##           }
-##           counter <- counter + 1
 ##         }
-##         i <- i +1
 ##       }
 ##     }
-##     class(regions) <- "MCR.RJaCGH.array.individual"
 ##   }
-##   ## ##########################################
-##   ## what about selecting minimum array frequence
-##   ## Model == none (No Chrom info)
-##   else if (class(obj[[ar.name]]) == "RJaCGH") {
-##     regions <- list()
-##     avg <- model.averaging(obj)
-##     ## We take the first array for reference (length, Position...)
-##     n <- length(obj[[ar.name]]$y)
-##     counter <- 1
-##     i <- 1
-##     ## First, we relabel the joint probabilities according to the states
-##     marginal.probs <- lapply(avg, function(x, alteration)
-##                              x$prob.states[, alteration], alteration)
-##     joint.probs <- lapply(avg, function(x, alteration)
-##                           x$prob.joint.states[, alteration], alteration)
-##     while (i <=n) {
-##       prob.temp <- sapply(marginal.probs, function(x) x[i])
-##       if (mean(prob.temp >= p)>=array.freq) {
-##         index.start <- i
-##         regions[[counter]] <- list()
-##         regions[[counter]]$start <- obj[[ar.name]]$Pos[i]
-##         regions[[counter]]$end <-
-##           obj[[ar.name]]$Pos[i]
-##         arrays.selected <- prob.temp[prob.temp >=p]
-##         regions[[counter]]$prob <-
-##           data.frame(arrays=names(arrays.selected), prob=arrays.selected)
-##         prob.temp <- mapply(function(x,y,i) {
-##           x[i] * y[i]
-##         }, x=marginal.probs, y=joint.probs, i=i)
-##         names(prob.temp) <- obj$array.names
-##         while (i < n && mean(prob.temp >=p)>=array.freq &&
-##                isTRUE(all.equal(names(prob.temp[prob.temp>p]),
-##                                 names(arrays.selected)))) {
-##           regions[[counter]]$end <- obj[[ar.name]]$Pos[i+1]
-##           regions[[counter]]$prob <-
-##             data.frame(arrays=names(arrays.selected), prob=arrays.selected)
-##           i <- i + 1
-##           prob.temp <- mapply(function(x,y,i) {
-##             x[index.start] * prod(y[index.start:i])
-##           }, x=marginal.probs, y=joint.probs, i=i)
-##           names(prob.temp) <- obj$array.names
-##         }
-##         counter <- counter + 1
-##       }
-##       i <- i +1
-##     }
-##     class(regions) <- "MCR.RJaCGH.array.noChrom.individual"
-##   }
+## ## ##################################################
+##   attr(regions, "alteration") <- alteration
+##   class(regions) <- "pMCR.RJaCGH"
 ##   regions
 ## }
 
+pMCR.RJaCGH.Chrom <- function(obj, p, alteration="Gain",
+                       array.weights=NULL) {
+  regions <- list()
+  for (chr in unique(obj$Chrom)) {
+    cat("Chromosome: ", chr, "\n")
+    regions[[chr]] <- pMCR.RJaCGH(obj[[chr]], p=p,
+                       alteration=alteration, 
+                       array.weights=array.weights)
+    attr(regions[[chr]], "Chrom") <- chr
+  }
+  attr(regions, "alteration") <- alteration
+  class(regions) <- "pMCR.RJaCGH.Chrom"
+  regions
+}
 
-## ##What about joint prob of all regions (chrom/genome)?
-## print.MCR <- function(obj) {
-##   UseMethod("print.MCR")
-## }
+pMCR.RJaCGH.genome <- function(obj, p, alteration="Gain",
+                       array.weights=NULL) {
+  if (alteration !="Gain" && alteration!="Loss")
+    stop ("'alteration' must be either 'Gain' or 'Loss'")
 
-## print.MCR.RJaCGH <- function(obj) {
+  if (!is.null(obj$Pos.rel))
+    Pos <- obj$Pos.rel
+  else
+    Pos <- obj$Pos
 
-##   cat("Start\tEnd\tProb.", attr(obj, "alteration"), "\n")
-##   res <- sapply(obj, function(x) c(x$start, x$end, x$prob)
-##          )
-##   res <- t(res)
-##   colnames(res) <-   c("Start", "End",
-##                        paste("Prob.", attr(obj, "alteration")))
-##   print(res)
+  regions <- list()
+  i.Tot <- 1
+  for(chr in unique(obj$Chrom)) {
+    n <- length(obj$y[obj$Chrom==chr])
+    regions[[chr]] <- list()
+    counter <- 1
+    i <- 1
+    marginal.probs <- model.averaging(obj)$prob.states[obj$Chrom==chr,alteration]
+    while (i <=n) {
+      prob <- marginal.probs[i]
+      if (prob >= p) {
+        regions[[chr]][[counter]] <- list()
+        regions[[chr]][[counter]]$start <- Pos[obj$Chrom==chr][i]
+        regions[[chr]][[counter]]$indexStart <- i.Tot
+        regions[[chr]][[counter]]$indexEnd <- i.Tot
+        regions[[chr]][[counter]]$end <- Pos[obj$Chrom==chr][i]
+        regions[[chr]][[counter]]$genes <- 1
+        regions[[chr]][[counter]]$prob <- prob
+        if (i < n) {
+          prob <- prob.seq(obj, start=regions[[chr]][[counter]]$indexStart,
+                           end=regions[[chr]][[counter]]$indexEnd + 1, alteration=alteration)
+          while ((i < n) && (prob >=p)) {
+            regions[[chr]][[counter]]$end <- Pos[obj$Chrom==chr][i+1]
+            regions[[chr]][[counter]]$indexEnd <- i.Tot + 1
+            regions[[chr]][[counter]]$genes <- regions[[chr]][[counter]]$genes + 1
+            regions[[chr]][[counter]]$prob <- prob
+            if (i < n-1) {
+              prob <- prob.seq(obj, start=regions[[chr]][[counter]]$indexStart,
+                               end=regions[[chr]][[counter]]$indexEnd + 1, alteration=alteration)
+            }
+            i <- i + 1
+            i.Tot <- i.Tot + 1
+          }
+        }
+        counter <- counter + 1
+      }
+      i <- i + 1
+      i.Tot <- i.Tot + 1
+    }
+    attr(regions[[chr]], "Chrom") <- chr
+  }
+  attr(regions, "alteration") <- alteration
+  class(regions) <- "pMCR.RJaCGH.genome"
+  regions
+}
   
-## }
 
-## print.MCR.RJaCGH.Chrom <- function(obj) {
+pMCR.RJaCGH.array <- function(obj, p, alteration="Gain", 
+                       array.weights=NULL) {
+  if (alteration !="Gain" && alteration!="Loss")
+    stop ("'alteration' must be either 'Gain' or 'Loss'")
+  if (is.null(array.weights))
+    array.weights <- rep(1/length(obj$array.names),
+                       length(obj$array.names))
+  else
+    array.weights <- array.weights / sum(array.weights)
 
-##   res <- sapply(obj, function(x) {
-##     sapply(x, function(y) c(attr(x, "Chrom"), y$start, y$end, y$prob))
-##   })
-##   ## res <- do.call("cbind", res)
-##   ## this does't work well
-##   ## some elements are matrices and others (the empty ones) lists
-##   res <- do.call("cbind", res[!sapply(res, is.list)])
-##   res <- t(res)
-##   colnames(res) <-   c("Chromosome", "Start", "End",
-##                        paste("Prob.", attr(obj, "alteration")))
-##   print(res)
+  if (inherits(obj[[obj$array.names[1]]], "RJaCGH.Chrom")) {
+    regions <- pMCR.RJaCGH.array.Chrom(obj, p, alteration,
+                                       array.weights)
+  }
+  if (inherits(obj[[obj$array.names[1]]], "RJaCGH.genome")) {
+    regions <- pMCR.RJaCGH.array.genome(obj, p, alteration,
+                                        array.weights)
+  }
+  
+  if (!is.null(obj[[obj$array.names[1]]]$Pos.rel))
+    Pos <- obj[[obj$array.names[1]]]$Pos.rel
+  else
+    Pos <- obj[[obj$array.names[1]]]$Pos
 
-## }
+  if (inherits(obj[[obj$array.names[1]]], "RJaCGH")) {
+    n <- length(obj[[obj$array.names[1]]]$y)
+    regions <- list()
+    counter <- 1
+    i <- 1
+    prob <- rep(0, length(obj$array.names))
+    marginal.probs <- list()
+    count <- 1
+    for(n.array in obj$array.names) {
+      marginal.probs[[count]] <- model.averaging(obj[[n.array]])$prob.states[,alteration]
+      count <- count + 1
+    }
+    while (i <=n) {
+      count <- 1
+      for(n.array in obj$array.names) {
+        prob[count] <- marginal.probs[[count]][i]
+        count <- count +1
+      }
+      count <- 1
+      if (prob %*% array.weights >= p) {
+        regions[[counter]] <- list()
+        regions[[counter]]$start <- Pos[i]
+        regions[[counter]]$indexStart <- i
+        regions[[counter]]$indexEnd <- i
+        regions[[counter]]$end <- Pos[i]
+        regions[[counter]]$genes <- 1
+        regions[[counter]]$prob <- prob %*% array.weights
+        if (i < n) {
+          for(n.array in obj$array.names) {
+            prob[count] <- prob.seq(obj[[n.array]], start=regions[[counter]]$indexStart,
+                                    end=regions[[counter]]$indexEnd + 1, alteration=alteration)
+            count <- count + 1
+          }
+          count <- 1
+          while ((i < n) && (prob %*%array.weights >=p)) {
+            regions[[counter]]$end <- Pos[i+1]
+            regions[[counter]]$indexEnd <- i + 1
+            regions[[counter]]$genes <- regions[[counter]]$genes + 1
+            regions[[counter]]$prob <- prob %*% array.weights
+            if (regions[[counter]]$indexEnd < n) {
+              for(n.array in obj$array.names) {
+                prob[count] <- prob.seq(obj[[n.array]], start=regions[[counter]]$indexStart,
+                                        end=regions[[counter]]$indexEnd + 1, alteration=alteration)
+                count <- count + 1
+              }
+              count <- 1
+            }
+            i <- i + 1
+          }
+        }
+        counter <- counter + 1
+      }
+      i <- i + 1
+    }
+    attr(regions, "alteration") <- alteration
+    class(regions) <- "pMCR.RJaCGH.array"
+  }
+  regions
+}
+
+pMCR.RJaCGH.array.Chrom <- function(obj, p, alteration="Gain",
+                       array.weights=NULL) {
+  regions <- list()
+  for (chr in unique(obj[[1]]$Chrom)) {
+    cat("Chromosome: ", chr, "\n")
+    if (!is.null(obj[[obj$array.names[1]]][[chr]]$Pos.rel))
+      Pos <- obj[[obj$array.names[1]]][[chr]]$Pos.rel
+    else
+      Pos <- obj[[obj$array.names[1]]][[chr]]$Pos
+
+    n <- length(obj[[obj$array.names[1]]][[chr]]$y)
+    regions[[chr]] <- list()
+    counter <- 1
+    i <- 1
+    prob <- rep(0, length(obj$array.names))
+    marginal.probs <- list()
+    count <- 1
+    for(n.array in obj$array.names) {
+      marginal.probs[[count]] <- model.averaging(obj[[n.array]][[chr]])$prob.states[,alteration]
+      count <- count + 1
+    }
+    while (i <=n) {
+      count <- 1
+      for(n.array in obj$array.names) {
+        prob[count] <- marginal.probs[[count]][i]
+        count <- count +1
+      }
+      count <- 1
+      if (prob %*% array.weights >= p) {
+        regions[[chr]][[counter]] <- list()
+        regions[[chr]][[counter]]$start <- Pos[i]
+        regions[[chr]][[counter]]$indexStart <- i
+        regions[[chr]][[counter]]$indexEnd <- i
+        regions[[chr]][[counter]]$end <- Pos[i]
+        regions[[chr]][[counter]]$genes <- 1
+        regions[[chr]][[counter]]$prob <- prob %*% array.weights
+        if (i < n) {
+          for(n.array in obj$array.names) {
+            prob[count] <- prob.seq(obj[[n.array]][[chr]],
+                                    start=regions[[chr]][[counter]]$indexStart,
+                                    end=regions[[chr]][[counter]]$indexEnd + 1,
+                                    alteration=alteration)
+            count <- count + 1
+          }
+          count <- 1
+          while ((i < n) && (prob %*%array.weights >=p)) {
+            regions[[chr]][[counter]]$end <- Pos[i+1]
+            regions[[chr]][[counter]]$indexEnd <- i + 1
+            regions[[chr]][[counter]]$genes <- regions[[chr]][[counter]]$genes + 1
+            regions[[chr]][[counter]]$prob <- prob %*% array.weights
+            if (regions[[chr]][[counter]]$indexEnd < n-1) {
+              for(n.array in obj$array.names) {
+                prob[count] <- prob.seq(obj[[n.array]][[chr]],
+                                        start=regions[[chr]][[counter]]$indexStart,
+                                        end=regions[[chr]][[counter]]$indexEnd + 1,
+                                        alteration=alteration)
+                count <- count + 1
+              }
+              count <- 1
+            }
+            i <- i + 1
+          }
+        }
+        counter <- counter + 1
+      }
+      i <- i + 1
+    }
+    attr(regions[[chr]], "Chrom") <- chr
+  }
+  attr(regions, "alteration") <- alteration
+  class(regions) <- "pMCR.RJaCGH.array.Chrom"
+  regions
+
+}
+
+
+pMCR.RJaCGH.array.genome <- function(obj, p, alteration="Gain",
+                       array.weights=NULL) {
+  if (alteration !="Gain" && alteration!="Loss")
+    stop ("'alteration' must be either 'Gain' or 'Loss'")
+  regions <- list()
+  i.Tot <- 1
+  Chrom <- obj[[obj$array.names[1]]]$Chrom
+  for(chr in unique(Chrom)) {
+    if (!is.null(obj[[obj$array.names[1]]]$Pos.rel))
+      Pos <- obj[[obj$array.names[1]]]$Pos.rel
+    else
+      Pos <- obj[[obj$array.names[1]]]$Pos
+
+    n <- length(obj[[obj$array.names[1]]]$y[Chrom==chr])
+    regions[[chr]] <- list()
+    counter <- 1
+    i <- 1
+    prob <- rep(0, length(obj$array.names))
+    marginal.probs <- list()
+    count <- 1
+    for(n.array in obj$array.names) {
+      marginal.probs[[count]] <-
+        model.averaging(obj[[n.array]])$prob.states[Chrom==chr,alteration]
+      count <- count + 1
+    }
+    while (i <=n) {
+      count <- 1
+      for(n.array in obj$array.names) {
+        prob[count] <- marginal.probs[[count]][i]
+        count <- count +1
+      }
+      count <- 1
+      if (prob %*% array.weights >= p) {
+        regions[[chr]][[counter]] <- list()
+        regions[[chr]][[counter]]$start <- Pos[Chrom==chr][i]
+        regions[[chr]][[counter]]$indexStart <- i.Tot
+        regions[[chr]][[counter]]$indexEnd <- i.Tot
+        regions[[chr]][[counter]]$end <- Pos[Chrom==chr][i]
+        regions[[chr]][[counter]]$genes <- 1
+        regions[[chr]][[counter]]$prob <- prob %*% array.weights
+        if (i < n) {
+          for(n.array in obj$array.names) {
+            prob[count] <- prob.seq(obj[[n.array]],
+                                    start=regions[[chr]][[counter]]$indexStart,
+                                    end=regions[[chr]][[counter]]$indexEnd + 1,
+                                    alteration=alteration)
+            count <- count + 1
+          }
+          count <- 1
+
+          while ((i < n) && (prob %*%array.weights >=p)) {
+            regions[[chr]][[counter]]$end <- Pos[Chrom==chr][i+1]
+            regions[[chr]][[counter]]$indexEnd <- i.Tot + 1
+            regions[[chr]][[counter]]$genes <- regions[[chr]][[counter]]$genes + 1
+            regions[[chr]][[counter]]$prob <- prob %*% array.weights
+            if (i < n-1) {
+              for(n.array in obj$array.names) {
+                prob[count] <- prob.seq(obj[[n.array]],
+                                        start=regions[[chr]][[counter]]$indexStart,
+                                        end=regions[[chr]][[counter]]$indexEnd + 1,
+                                        alteration=alteration)
+                count <- count + 1
+              }
+              count <- 1
+            }
+            i <- i + 1
+            i.Tot <- i.Tot + 1
+          }
+        }
+        counter <- counter + 1
+      }
+      i <- i + 1
+      i.Tot <- i.Tot + 1
+    }
+    attr(regions[[chr]], "Chrom") <- chr
+  }
+  attr(regions, "alteration") <- alteration
+  class(regions) <- "pMCR.RJaCGH.array.genome"
+  regions
+}
+
+
+
+##What about joint prob of all regions (chrom/genome)?
+
+print.pMCR.RJaCGH <- function(x,...) {
+
+  res <- sapply(x, function(y) c(y$start, y$end, y$genes, y$prob)
+         )
+  res <- t(res)
+  if (ncol(res)>0) {
+    colnames(res) <-   c("Start", "End", "#Genes",
+                         paste("Prob.", attr(x, "alteration")))
+    print(res)
+  }
+  else {
+    res <- "No common minimal regions found"
+    print(paste(res, "\n", sep=""))
+  }
+  
+}
+
+print.pMCR.RJaCGH.Chrom <- function(x,...) {
+
+  res <- sapply(x, function(y) {
+    sapply(y, function(z) c(attr(y, "Chrom"), z$start, z$end, z$genes,
+    z$prob))
+  })
+  if(sum(sapply(res, function(x) length(x)))>0) {
+    res <- do.call("cbind", res[!sapply(res, is.list)])
+    res <- t(res)
+    colnames(res) <-   c("Chromosome", "Start", "End", "#Genes",
+                         paste("Prob.", attr(x, "alteration")))
+    print(res)
+  }
+  else {
+    res <- "No common minimal regions found"
+    print(paste(res, "\n", sep=""))
+  }
+
+}
+print.pMCR.RJaCGH.genome <- function(x,...) {
+
+  res <- sapply(x, function(y) {
+    sapply(y, function(z) c(attr(y, "Chrom"), z$start, z$end, z$genes,
+    z$prob))
+  })
+  if(sum(sapply(res, function(x) length(x)))>0) {
+    res <- do.call("cbind", res[!sapply(res, is.list)])
+    res <- t(res)
+    colnames(res) <-   c("Chromosome", "Start", "End", "#Genes",
+                         paste("Prob.", attr(x, "alteration")))
+    print(res)
+  }
+  else {
+    res <- "No common minimal regions found"
+    print(paste(res, "\n", sep=""))
+  }
+
+}
        
+print.pMCR.RJaCGH.array <- function(x,...) {
 
-
-## print.MCR.RJaCGH.genome <- function(obj) {
-
-##   res <- sapply(obj, function(x) {
-##     sapply(x, function(y) c(attr(x, "Chrom"), y$start, y$end, y$prob))
-##   })
-##   ## res <- do.call("cbind", res)
-##   ## this does't work well
-##   ## some elements are matrices and others (the empty ones) lists
-##   res <- do.call("cbind", res[!sapply(res, is.list)])
-##   res <- t(res)
-##   colnames(res) <-   c("Chromosome", "Start", "End",
-##                        paste("Prob.", attr(obj, "alteration")))
-##   print(res)
-
-## }
-
-## print.MCR.RJaCGH.array.global <- function(obj) {
-
-
-##   res <- sapply(obj, function(x) {
-##     sapply(x, function(y) c(attr(x, "Chrom"), y$start, y$end, y$prob))
-##   })
-##   ## res <- do.call("cbind", res)
-##   ## this does't work well
-##   ## some elements are matrices and others (the empty ones) lists
-##   res <- do.call("cbind", res[!sapply(res, is.list)])
-##   res <- t(res)
-##   colnames(res) <-   c("Chromosome", "Start", "End",
-##                        paste("Prob.", attr(obj, "alteration")))
-##   print(res)
-## }
-
-## print.MCR.RJaCGH.array.individual <- function(obj) {
-
-
-##   res <- sapply(obj, function(x) {
-##     sapply(x, function(y) c(attr(x, "Chrom"), y$start, y$end, nrow(y$prob)))
-##   })
-##   ## res <- do.call("cbind", res)
-##   ## this does't work well
-##   ## some elements are matrices and others (the empty ones) lists
-##   res <- do.call("cbind", res[!sapply(res, is.list)])
-##   res <- t(res)
-##   colnames(res) <-   c("Chromosome", "Start", "End",
-##                        paste("#Samples with", attr(obj, "alteration")))
-##   print(res)
-## }
-
-## print.MCR.RJaCGH.array.noChrom.global <- function(obj) {
-
-##   res <- sapply(obj, function(y) c(y$start, y$end, y$prob))
-##   ## res <- do.call("cbind", res)
-##   ## this does't work well
-##   ## some elements are matrices and others (the empty ones) lists
-##   res <- t(res)
-##   colnames(res) <-   c("Start", "End",
-##                        paste("Prob.", attr(obj, "alteration")))
-##   print(res)
-## }
+  res <- sapply(x, function(y) c(y$start, y$end, y$genes, y$prob)
+         )
+  res <- t(res)
+  if (ncol(res)>0) {
+    colnames(res) <-   c("Start", "End", "#Genes",
+                         paste("Prob.", attr(x, "alteration")))
+    print(res)
+  }
+  else {
+    res <- "No minimal common regions found"
+    print(paste(res, "\n",sep=""))
+  }
+  
+}
 
 
 
-## print.MCR.RJaCGH.array.noChrom.individual <- function(obj) {
+print.pMCR.RJaCGH.array.Chrom <- function(x,...) {
 
-##   res <- sapply(obj, function(y) c(y$start, y$end, nrow(y$prob)))
-##   ## res <- do.call("cbind", res)
-##   ## this does't work well
-##   ## some elements are matrices and others (the empty ones) lists
-##   res <- t(res)
-##   colnames(res) <-   c("Start", "End",
-##                        paste("#Samples with", attr(obj, "alteration")))
-##   print(res)
-## }
 
-## ## method='individual' does not exactly what's intented
-## ## what's intended?
+  res <- sapply(x, function(y) {
+    sapply(y, function(z) c(attr(y, "Chrom"), z$start, z$end, z$genes,
+                            z$prob))
+  })
+  if(sum(sapply(res, function(x) length(x)))>0) {
+    res <- do.call("cbind", res[!sapply(res, is.list)])
+    res <- t(res)
+    colnames(res) <-   c("Chromosome", "Start", "End", "#Genes",
+                         paste("Prob.", attr(x, "alteration")))
+    print(res)
+  }
+  else {
+    res <- "No common minimal regions found"
+    print(paste(res, "\n", sep=""))
+  }
+}
+print.pMCR.RJaCGH.array.genome <- function(x,...) {
+
+
+  res <- sapply(x, function(y) {
+    sapply(y, function(z) c(attr(y, "Chrom"), z$start, z$end, z$genes,
+                            z$prob))
+  })
+  if(sum(sapply(res, function(x) length(x)))>0) {
+    res <- do.call("cbind", res[!sapply(res, is.list)])
+    res <- t(res)
+    colnames(res) <-   c("Chromosome", "Start", "End", "#Genes",
+                         paste("Prob.", attr(x, "alteration")))
+    print(res)
+  }
+  else {
+    res <- "No common minimal regions found"
+    print(paste(res, "\n", sep=""))
+  }
+}
+
+genome.plot <- function(obj, col=NULL, breakpoints=NULL) {
+  if (!is.null(col) & !is.null(breakpoints)) {
+    if(length(col) != length(breakpoints) + 1)
+      stop("length(col) must be length(breakpoints + 1\n")
+    if(length(breakpoints) < 2)
+      stop("length(breakpoints) must be at least 2\n")
+   }
+
+  if(inherits(obj, "RJaCGH.array")) {
+    Chrom <- obj[[obj$array.name[1]]]$Chrom
+    Pos <- obj[[obj$array.name[1]]]$Pos
+    if (!is.null(obj[[obj$array.name[1]]]$Pos.rel))
+      Pos <- obj[[obj$array.name[1]]]$Pos.rel
+
+    probs <- model.averaging(obj)
+    probs <- lapply(probs, function(x) lapply(x, function(y) y$prob.states))
+    probs <- lapply(probs, function(x) do.call("rbind", x))
+    average <- matrix(0, nrow=nrow(probs[[1]]), ncol=3)
+    y.mean <- rep(0, nrow(probs[[1]]))
+    y <- lapply(obj, function(x) lapply(x, function(y) y$y))
+    y <- lapply(y, function(x) do.call("c", x))
+    y$array.names <- NULL
+    for (i in 1:length(probs)) {
+      average <- average + probs[[i]]
+      y.mean <- y.mean + y[[i]]
+    }
+    average <- average / length(probs)
+    y.mean <- y.mean / length(probs)
+    y <- y.average
+    probs <- average
+  }
+  
+  if(inherits(obj, "RJaCGH.genome") | inherits(obj, "RJaCGH.Chrom")) {
+    Chrom <- obj$Chrom
+    Pos <- obj$Pos
+    if (!is.null(obj$Pos.rel))
+      Pos <- obj$Pos.rel
+    if(inherits(obj, "RJaCGH.Chrom") & !is.null(obj[[1]]$Pos.rel)) {
+      Pos <- numeric(0)
+      for(chr in unique(obj$Chrom))
+        Pos <- c(Pos, obj[[chr]]$Pos.rel)
+    }
+                    
+    
+    probs <- model.averaging(obj)
+    y <- obj$y
+    if (inherits(obj, "RJaCGH.Chrom")) {
+      probs <-
+        do.call("rbind",
+                lapply(probs, function(x) x$prob.states))
+      for (chr in unique(Chrom)) {
+        y <- c(y, obj[[chr]]$y)
+      }
+    }
+    else probs <- probs$prob.states
+    index <- 1*(y<0) + 3*(y>=0)
+    colo <- rep(0, length(index))
+    for(i in 1:length(index)) {
+      colo[i] <- probs[i,index[i]]
+    }
+  }
+  colo[index==1] <- -colo[index==1]
+  colo.round <- floor(colo*10) / 10
+  colo.recoded <- rep(0, length(colo.round))
+  
+    if (is.null(col)) {
+    col <- colors()
+    col <- col[c(51, 50, 86, 24, 404, 552, 555)]
+  }
+  if(is.null(breakpoints)) {
+    breakpoints <- c(-0.9, -0.7, -0.5, 0.5, 0.7, 0.9)
+  }
+  MidPoint <- floor(length(col)/2)
+  colo.recoded[colo.round <=-breakpoints[1]] <- col[1]
+  label.legend <- paste("P.Loss >= ", -breakpoints[1], sep="")
+  if (length(breakpoints) > 2) {
+    for (i in 2:MidPoint) {
+      colo.recoded[colo.round > breakpoints[i-1] & colo.round <=
+    breakpoints[i]] <- col[i]
+      label.legend <- c(label.legend, paste(breakpoints[i],
+                                            " > P.Loss >= ", -breakpoints[i-1], sep=""))
+    }
+  }
+  colo.recoded[colo.round > breakpoints[MidPoint] & colo.round <
+    breakpoints[MidPoint +1]] <- col[MidPoint +1]
+  label.legend <- c(label.legend, paste("P.Loss < ", -breakpoints[i-1],
+                                        " or P.Gain >= ", breakpoints[i], sep=""))
+  
+  if (length(breakpoints) > 2) {
+    for (i in (MidPoint+2):length(breakpoints)) {
+      colo.recoded[colo.round >=breakpoints[i-1] & colo.round
+    < breakpoints[i]] <- col[i+1]
+      label.legend <- c(label.legend, paste(breakpoints[i],
+                                            " > P.Gain >= ", breakpoints[i-1], sep=""))
+    }
+  }
+
+  colo.recoded[colo.round >=breakpoints[length(breakpoints)]] <-
+  col[length(col)]
+  label.legend <- c(label.legend, paste("P.Gain >= ",
+                                        breakpoints[length(breakpoints)], sep=""))
+  n.chrom <- length(unique(Chrom))
+  
+  par(omi=c(0,0,0,0))
+  par(mfrow=c(1, 2))
+  xmax <- max(Pos)
+  plot(0,0, type="n", xlim=c(0, xmax), ylim=c(1, ceiling(n.chrom/2)),
+       axes=FALSE, ylab="Chromosome", xlab="")
+  axis(side=2, at=c(1:ceiling(n.chrom/2)), labels=unique(Chrom)[1:ceiling(n.chrom/2)])
+
+  for(i in 1:ceiling(n.chrom/2)) {
+
+    lines(c(0, max(Pos[Chrom==i])), c(i,i))
+    points(Pos[Chrom==i], i + y[Chrom==i]/ (2*max(abs(y))),
+           pch=19,col=colo.recoded[Chrom==i], cex=0.5)
+  }
+  plot(0,0, type="n", xlim=c(0, xmax), ylim=c(1, ceiling(n.chrom/2)),
+       axes=FALSE, ylab="Chromosome", xlab="")
+  axis(side=2, at=1:(n.chrom - ceiling(n.chrom/2)), labels=unique(Chrom)[(ceiling(n.chrom/2)+1):n.chrom])
+
+  for(i in (ceiling(n.chrom/2) +1):n.chrom) {
+    lines(c(0, max(Pos[Chrom==i])), c(i-12,i-12))
+    points(Pos[Chrom==i], i -ceiling(n.chrom/2) + y[Chrom==i]/ (2*max(abs(y))),
+           pch=16,col=colo.recoded[Chrom==i], cex=0.5)
+  }
+  legend(max(Pos[Chrom==(floor(n.chrom/2)+3)]), 8, legend=label.legend,
+         col=col, pch=19)
+  
+}

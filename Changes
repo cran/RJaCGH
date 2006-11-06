@@ -1,5 +1,6 @@
-0.5.1: Bug fix in summary.RJaCGH (thanks to Douglas Grove) and in
-       Metropolis.Sweep.C (thanks in Joao Fadista).
+1.0.0: Probabilistic minimal commmon regions.
+      Plot for the genome (genome.plot).
+0.5.: Bug fix in summary.RJaCGH (thanks to Douglas Grove).
 0.5:  Automatic labelling of states
 0.4-3: Functions can take distance, not just position
        Added preprint to inst/doc

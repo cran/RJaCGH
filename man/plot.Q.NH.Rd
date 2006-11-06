@@ -28,8 +28,13 @@ distances are normalized to lay between 0 and 1.
 A plot is produced showing the probability of staying in the same hidden
 state versus distance between adjacent genes, for every state.
 }
-\references{Oscar Rueda and Ramon Diaz Uriarte, in prep.}
-\author{Oscar Rueda and Ramon Diaz-Uriarte}
+\references{Oscar   Oscar M. Rueda and Ramon Diaz Uriarte. A flexible, accurate and
+  extensible statistical method for detecting genomic copy-number
+  changes. \url{http://biostats.bepress.com/cobra/ps/art9/}.
+{http://biostats.bepress.com/cobra/ps/art9/}.
+}
+
+\author{Oscar M. Rueda and Ramon Diaz-Uriarte}
 \examples{
 ## Model with two hidden states
 ## Note that RJaCGH normalizes distances to be between 0 and 1

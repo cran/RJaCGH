@@ -44,9 +44,14 @@ sublists, as in \code{\link{RJaCGH}}.
 %   \item{prob.joint.states}{Matrix with the joint probabilities
 %     associated to each pair of states for every observation.}
 }
-\references{Oscar Rueda and Ramon Diaz Uriarte, in prep.}
-\author{Oscar Rueda and Ramon Diaz Uriarte}
-\seealso{\code{\link{RJaCGH}},
+\references{  Oscar M. Rueda and Ramon Diaz Uriarte. A flexible, accurate and
+  extensible statistical method for detecting genomic copy-number
+  changes. \url{http://biostats.bepress.com/cobra/ps/art9/}
+  {http://biostats.bepress.com/cobra/ps/art9/}
+}
+
+  \author{Oscar M. Rueda and Ramon Diaz Uriarte}
+  \seealso{\code{\link{RJaCGH}},
   \code{\link{summary.RJaCGH}}, \code{\link{model.averaging}},
   \code{\link{plot.RJaCGH}}, \code{\link{trace.plot}},
   \code{\link{gelman.brooks.plot}}, \code{\link{collapseChain}}}

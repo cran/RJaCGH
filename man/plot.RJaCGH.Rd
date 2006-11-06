@@ -10,9 +10,9 @@ A plot is drawed with information from the fit of a RJaCGH object.
 }
 \usage{
 plot.RJaCGH(x, k = NULL, model.averaging = TRUE, cex=1, ...)
-plot.RJaCGH.Chrom(x, Chrom="genome", model.averaging=TRUE, cex=1, ...)
-plot.RJaCGH.genome(x, k=NULL, model.averaging=TRUE, cex=1, ...)
-plot.RJaCGH.array(x, method="averaging", weights=NULL, cex=1, ...)
+\method{plot}{RJaCGH.Chrom}(x, Chrom="genome", model.averaging=TRUE, cex=1, k=NULL,...)
+\method{plot}{RJaCGH.genome}(x, k=NULL, model.averaging=TRUE, cex=1,...)
+\method{plot}{RJaCGH.array}(x, method="averaging", weights=NULL, cex=1, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -62,8 +62,11 @@ plot.RJaCGH.array(x, method="averaging", weights=NULL, cex=1, ...)
 \value{
   A plot.
 }
-\references{Oscar Rueda and Ramon Diaz Uriarte, in prep.}
-\author{Oscar Rueda and Ramon Diaz Uriarte}
+\references{Oscar M. Rueda and Ramon Diaz Uriarte,
+  \url{http://biostats.bepress.com/cobra/ps/art9/}
+  {http://biostats.bepress.com/cobra/ps/art9/}
+}
+\author{Oscar M. Rueda and Ramon Diaz Uriarte}
  \seealso{\code{\link{RJaCGH}},
   \code{\link{summary.RJaCGH}}, \code{\link{model.averaging}},
   \code{\link{states}}, \code{\link{trace.plot}},

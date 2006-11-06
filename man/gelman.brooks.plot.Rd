@@ -52,8 +52,12 @@ gelman.brooks.plot(obj, bin = 1000, array = NULL, Chrom = NULL, k = NULL)
   Computational and Graphical Statistics. p434-455.
 
   
-Oscar Rueda and Ramon Diaz Uriarte, in prep.}
-\author{Oscar Rueda and Ramon Diaz Uriarte}
+  Oscar M. Rueda and Ramon Diaz Uriarte. A flexible, accurate and
+  extensible statistical method for detecting genomic copy-number
+  changes. \url{http://biostats.bepress.com/cobra/ps/art9/}.
+  {http://biostats.bepress.com/cobra/ps/art9/}.
+}  
+\author{Oscar M. Rueda and Ramon Diaz Uriarte}
 
 \seealso{\code{\link{RJaCGH}},
   \code{\link{summary.RJaCGH}}, \code{\link{model.averaging}},

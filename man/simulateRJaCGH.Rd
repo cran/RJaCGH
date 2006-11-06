@@ -35,8 +35,13 @@ A list with components
   \item{y }{Observations}
 
 }
-\references{Oscar Rueda and ramon Diaz-Uriarte, in prep.}
-\author{Oscar Rueda and Ramon Diaz-Uriarte}
+\references{  Oscar M. Rueda and Ramon Diaz Uriarte. A flexible, accurate and
+  extensible statistical method for detecting genomic copy-number
+  changes. \url{http://biostats.bepress.com/cobra/ps/art9/}.
+{http://biostats.bepress.com/cobra/ps/art9/}.
+}
+
+\author{Oscar M. Rueda and Ramon Diaz-Uriarte}
 
 \seealso{Q.NH, RJaCGH}
 \examples{

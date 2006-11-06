@@ -12,10 +12,10 @@ Bayesian model averaging for the estimation of hidden state sequence.
 }
 \usage{
 model.averaging(obj)
-model.averaging.RJaCGH(obj)
-model.averaging.RJaCGH.Chrom(obj)
-model.averaging.RJaCGH.genome(obj)
-model.averaging.RJaCGH.array(obj)
+\method{model.averaging}{RJaCGH}(obj)
+\method{model.averaging}{RJaCGH.Chrom}(obj)
+\method{model.averaging}{RJaCGH.genome}(obj)
+\method{model.averaging}{RJaCGH.array}(obj)
 
 }
 %- maybe also 'usage' for other objects documented here.
@@ -38,8 +38,12 @@ model.averaging.RJaCGH.array(obj)
 %     to each pair of states for every observation.}
 
 }
-\references{Oscar Rueda and Ramon Diaz Uriarte, in prep.}
-\author{Oscar Rueda and Ramon Diaz Uriarte}
+\references{  Oscar M. Rueda and Ramon Diaz Uriarte. A flexible, accurate and
+  extensible statistical method for detecting genomic copy-number
+  changes. \url{http://biostats.bepress.com/cobra/ps/art9/}.
+  {http://biostats.bepress.com/cobra/ps/art9/}.
+}
+\author{Oscar M. Rueda and Ramon Diaz Uriarte}
 
 \seealso{\code{\link{RJaCGH}},
   \code{\link{summary.RJaCGH}}, \code{\link{states}},

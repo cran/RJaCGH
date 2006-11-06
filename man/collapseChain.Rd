@@ -13,10 +13,10 @@ method of class 'RJaCGH'.
 }
 \usage{
 collapseChain(obj)
-collapseChain.RJaCGH(obj)
-collapseChain.RJaCGH.genome(obj)
-collapseChain.RJaCGH.Chrom(obj)
-collapseChain.RJaCGH.array(obj)
+\method{collapseChain}{RJaCGH}(obj)
+\method{collapseChain}{RJaCGH.genome}(obj)
+\method{collapseChain}{RJaCGH.Chrom}(obj)
+\method{collapseChain}{RJaCGH.array}(obj)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -34,8 +34,12 @@ call later \code{gelman.brooks.plot}.
 \value{
 An object of the same class as any of the list \code{obj}.
 }
-\references{Oscar Rueda and Ramon Diaz Uriarte, in prep.}
-\author{Oscar Rueda and Ramon Diaz Uriarte}
+\references{  Oscar M. Rueda and Ramon Diaz Uriarte. A flexible, accurate and
+  extensible statistical method for detecting genomic copy-number
+  changes. \url{http://biostats.bepress.com/cobra/ps/art9/}.
+  {http://biostats.bepress.com/cobra/ps/art9/}.
+}
+\author{Oscar M. Rueda and Ramon Diaz Uriarte}
 
 \seealso{\code{\link{RJaCGH}},
   \code{\link{summary.RJaCGH}}, \code{\link{model.averaging}},

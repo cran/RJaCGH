@@ -32,8 +32,12 @@ log-likelihood in RJaCGH model.
 It returns  a list with the same components passed plus:
   \item{loglik }{Log-likelihood}
 }
-\references{Oscar Rueda and Ramon Diaz Uriarte, in prep.}
-\author{Oscar Rueda and Ramon Diaz-Uriarte}
+\references{  Oscar M. Rueda and Ramon Diaz Uriarte. A flexible, accurate and
+  extensible statistical method for detecting genomic copy-number
+  changes. \url{http://biostats.bepress.com/cobra/ps/art9/}.
+  {http://biostats.bepress.com/cobra/ps/art9/}.
+}
+\author{Oscar M. Rueda and Ramon Diaz-Uriarte}
 
 \examples{
 
@@ -52,4 +56,5 @@ sigma.2=c(1,1,1), beta=matrix(c(0, 1, 1, 1, 0, 1, 1, 1, 0), 3))$loglik
 loglik
 }
 \keyword{models}% at least one, from doc/KEYWORDS
+
 

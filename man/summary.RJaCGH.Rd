@@ -11,9 +11,9 @@
 }
 \usage{
 summary.RJaCGH(object, k = NULL, point.estimator = "median", ...)
-summary.RJaCGH.Chrom(object, point.estimator="median", ...)
-summary.RJaCGH.genome(object, k=NULL, point.estimator="median", ...)
-summary.RJaCGH.array(object, point.estimator="median", ...)
+\method{summary}{RJaCGH.Chrom}(object, point.estimator="median", ...)
+\method{summary}{RJaCGH.genome}(object, k=NULL, point.estimator="median", ...)
+\method{summary}{RJaCGH.array}(object, point.estimator="median", ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -38,8 +38,12 @@ density estimation through the function \code{\link{density}}
   \item{sigma.2}{Point estimator of \code{sigma.2}}
   \item{beta}{Point estimator of \code{beta}}
 }
-\references{Oscar Rueda and Ramon Diaz Uriarte, in prep.}
-\author{Oscar Rueda and Ramon Diaz Uriarte}
+\references{  Oscar M. Rueda and Ramon Diaz Uriarte. A flexible, accurate and
+  extensible statistical method for detecting genomic copy-number
+  changes. \url{http://biostats.bepress.com/cobra/ps/art9/}.
+  {http://biostats.bepress.com/cobra/ps/art9/}.
+}
+\author{Oscar M. Rueda and Ramon Diaz Uriarte}
 
 \seealso{\code{\link{RJaCGH}},
   \code{\link{states}}, \code{\link{model.averaging}},

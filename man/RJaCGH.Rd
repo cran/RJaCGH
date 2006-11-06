@@ -20,8 +20,9 @@ RJ=TRUE, auto.label=0.60)
     to the genome or relative to the chromosome. They should be ordered
     within every chromosome. This is, the arrays must be ordered by their
   positions in the genome.}
-  \item{Dist}{Vector with distances between genes. In this version it
-    is still ignored, as distances are computed through Pos.}
+  \item{Dist}{Vector of distances between genes. It should be a vector
+    of length \code{length(y)-1}. Note that when \code{Chrom} is not NULL,
+    every last value of every Chromosome is not used.}
   \item{model}{if \code{model}="genome", the same model is fitted for
     the whole genome. If \code{model}="Chrom", a different model is
     fitted for each chromosome.}
@@ -104,7 +105,9 @@ RJ=TRUE, auto.label=0.60)
   \code{get.jump()} is made to find 'good' values.
 
   A relabelling of hidden states is performed to label biological
-  states. The states whom have zero value in their IQR are labelled as
+  states. The states whom have zero value inside a 95\% confidence
+  based on a normal distribution with means the median of \code{mu}
+  and sd the median of the square root fo \code{sigma.2} are labelled as
   'Normal'. If no state is labelled as 'Normal', the closest state to
   zero is chosen.
   If \code{auto.label} is not null, closest states to 'Normal' are also
@@ -160,9 +163,16 @@ RJ=TRUE, auto.label=0.60)
   \item{prob.beta}{probability of aceptance of \code{beta} in the
     Metropolis-Hastings step.}
   \item{state.labels}{Labels of the biological states.}
+  \item{prob.states}{Marginal posterior probabilities of belonging to
+    every hidden state.}
+  \item{prob.joint.states}{Joint posterior probabilities for every pair
+  of adjacent genes of both Gains, Normal or Losses.}
 }
 \references{
-  Oscar Rueda and Ramon Diaz Uriarte, in prep.
+  Oscar M. Rueda and Ramon Diaz Uriarte. A flexible, accurate and
+  extensible statistical method for detecting genomic copy-number
+  changes. \url{http://biostats.bepress.com/cobra/ps/art9/}.
+  {http://biostats.bepress.com/cobra/ps/art9/}.
   
   Cappe, Moulines and Ryden, 2005. Inference in Hidden Markov
   Models. Springer.
@@ -171,7 +181,7 @@ RJ=TRUE, auto.label=0.60)
   computation and Bayesian model determination. Biometrika, 82,
   711-732.
 }
-\author{Oscar Rueda and Ramon Diaz Uriarte}
+\author{Oscar M. Rueda and Ramon Diaz Uriarte}
 
 \seealso{\code{\link{summary.RJaCGH}},
   \code{\link{states}}, \code{\link{model.averaging}},

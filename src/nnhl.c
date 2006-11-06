@@ -1158,7 +1158,7 @@ void MetropolisSweep(double *y, double *x, int *genome, int *index,
 		     int *k, double *mu, double *sigma2,
 		     double *beta, double *stat, 
 		     int *startK, int *RJ, double *maxVar, 
-		     double *probStates, double *probJointStates, double *loglik)  {
+		     double *probStates, double *freqJointStates, double *loglik)  {
 
   /*  Verify we can run */
 /*   We assume at least 32-bit integers, which is good enough. FIXME: do the check*/
@@ -1178,7 +1178,7 @@ void MetropolisSweep(double *y, double *x, int *genome, int *index,
   PR(dummy_random_number);
 #endif
   
-  int i,j,m;
+  int i,j,m, jointIndex;
   int t;
   int r, nn;
   int *states; states = Calloc(*n, int);
@@ -1340,7 +1340,6 @@ void MetropolisSweep(double *y, double *x, int *genome, int *index,
     }
 
     loglik[(i-1)* *TOT] = loglikLast[i-1];
-
     /*  viterbi */
     if (i >1) {
       viterbi(y, x, genome, index, &i, n, OldMu, OldSigma2, OldBeta, OldStat,
@@ -1361,23 +1360,15 @@ void MetropolisSweep(double *y, double *x, int *genome, int *index,
 	  }
 	}
       }
-      /* Joint 2x2 probabilities */
-/*       for (m=0; m < i; ++m) { */
-/* 	for (j=0; j < *n-1; ++j) { */
-/* 	  if(states[j]==m+1 && states[j+1]==m+1) { */
-/* 	    probJointStates[(*n-1)*((i*(i-1)/2 -1) + m) + j] =  */
-/* 	      	      (1.0 / (double)(times[i-1]+1)) +  */
-/* 	      	      probJointStates[(*n-1)*((i*(i-1)/2 -1) + m) + j] *  */
-/* 	      	      (double)(times[i-1]+1 -1) / (double)(times[i-1]+1); */
-	    
-/* 	  } */
-/* 	  else { */
-/* 	    probJointStates[(*n-1)*((i*(i-1)/2 -1) + m) + j] = */
-/* 	      probJointStates[(*n-1)*((i*(i-1)/2 -1) + m) + j] * */
-/* 	      (double)(times[i-1]+1 -1) / (double)(times[i-1]+1); */
-/* 	  } */
-/* 	} */
-/*       } */
+      /* Joint 2x2  */
+      for (j=0; j < *n-1; ++j) {
+	/* index for the array */
+	jointIndex = (*n-1) * (((i*(i-1)*(2*(i-1)+1)) / 6) - 1);
+	jointIndex = jointIndex + ((states[j]-1) * i * (*n-1));
+	jointIndex = jointIndex + ((states[j+1]-1) * (*n-1));
+	jointIndex = jointIndex + j;
+	freqJointStates[jointIndex] = freqJointStates[jointIndex] + 1;
+      }
     }
   }
   
@@ -1444,25 +1435,18 @@ void MetropolisSweep(double *y, double *x, int *genome, int *index,
 	  }
 	}
       }
-      /* Joint 2x2 probabilities */
-     /*  for (i=0; i < r; ++i) { */
-/* 	for (j=0; j < *n-1; ++j) { */
-/* 	  if(states[j]==i+1 && states[j+1]==i+1) { */
-/* 	    probJointStates[(*n-1)*((r*(r-1)/2 -1) + i) + j] =  */
-/* 	      	      (1.0 / (double)(times[r-1]+1 - burninTimes[r-1])) +  */
-/* 	      	      probJointStates[(*n-1)*((r*(r-1)/2 -1) + i) + j] *  */
-/* 	      	      (double)(times[r-1]+1 - burninTimes[r-1]-1) /  */
-/* 	      	      (double)(times[r-1]+1 - burninTimes[r-1]); */
-/* 	  } */
-/* 	  else { */
-/* 	    	    probJointStates[(*n-1)*((r*(r-1)/2 -1) + i) + j] =  */
-/* 	      	      probJointStates[(*n-1)*((r*(r-1)/2 -1) + i) + j] *  */
-/* 	      	      (double)(times[r-1]+1 - burninTimes[r-1] -1) /  */
-/* 	      	      (double)(times[r-1]+1 - burninTimes[r-1]); */
-/* 	  } */
-/* 	} */
-/*       } */
+
+      /* Joint 2x2  */
+      for (j=0; j < *n-1; ++j) {
+	/* index for the array */
+	jointIndex = (*n-1) * (((r*(r-1)*(2*(r-1)+1)) / 6) - 1);
+	jointIndex = jointIndex + ((states[j]-1) * r * (*n-1));
+	jointIndex = jointIndex + ((states[j+1]-1) * (*n-1));
+	jointIndex = jointIndex + j;
+	freqJointStates[jointIndex] = freqJointStates[jointIndex] + 1;
+      }
     }
+
     /*  save updates */
     for (i=0; i <r; ++i) {
       mu[indexMu[r-1] + (times[r-1]*r) + i] = OldMu[i];
@@ -1522,30 +1506,22 @@ void MetropolisSweep(double *y, double *x, int *genome, int *index,
 		}
 	      }
 	    }
-	    /* Joint 2x2 probabilities */
-	/*     for (i=0; i < r; ++i) { */
-/* 	      for (j=0; j < *n-1; ++j) { */
-/* 		if(states[j]==i+1 && states[j+1]==i+1) { */
-/* 		  probJointStates[(*n-1)*((r*(r-1)/2 -1) + i) + j] =  */
-/* 		    (1.0 / (double)(times[r-1]+1 - burninTimes[r-1])) +  */
-/* 		    probJointStates[(*n-1)*((r*(r-1)/2 -1) + i) + j] *  */
-/* 		    (double)(times[r-1]+1 - burninTimes[r-1]-1) /  */
-/* 		    (double)(times[r-1]+1 - burninTimes[r-1]); */
-/* 		} */
-/* 		else { */
-/* 		  probJointStates[(*n-1)*((r*(r-1)/2 -1) + i) + j] =  */
-/* 		    probJointStates[(*n-1)*((r*(r-1)/2 -1) + i) + j] *  */
-/* 		    (double)(times[r-1]+1 - burninTimes[r-1] -1) /  */
-/* 		    (double)(times[r-1]+1 - burninTimes[r-1]); */
-/* 		} */
-/* 	      } */
-/* 	    } */
+	    /* Joint 2x2  */
+	    for (j=0; j < *n-1; ++j) {
+	      /* index for the array */
+	      jointIndex = (*n-1) * (((r*(r-1)*(2*(r-1)+1)) / 6) - 1);
+	      jointIndex = jointIndex + ((states[j]-1) * r * (*n-1));
+	      jointIndex = jointIndex + ((states[j+1]-1) * (*n-1));
+	      jointIndex = jointIndex + j;
+	      freqJointStates[jointIndex] = freqJointStates[jointIndex] + 1;
+	    }
 	  }
-	  for (i=0; i<r; ++i) {
-	    mu[indexMu[r-1] + (times[r-1]*r) + i] = NewMu[i];
-	    sigma2[indexMu[r-1] + (times[r-1]*r) +i] = NewSigma2[indexPerm[i]-1];
-	  }
-	  for (i=0; i<r; ++i) {
+	
+	for (i=0; i<r; ++i) {
+	  mu[indexMu[r-1] + (times[r-1]*r) + i] = NewMu[i];
+	  sigma2[indexMu[r-1] + (times[r-1]*r) +i] = NewSigma2[indexPerm[i]-1];
+	}
+	for (i=0; i<r; ++i) {
 	    for(j=0; j<r; ++j) {	  
 	      beta[indexBeta[r-1] + (times[r-1]*r*r) + i* r + j] = 
 		NewBeta[(indexPerm[i]-1)* r + indexPerm[j]-1];
@@ -1590,24 +1566,15 @@ void MetropolisSweep(double *y, double *x, int *genome, int *index,
 		}
 	      }
 	    }
-	    /* Joint 2x2 probabilities */
-/* 	    for (i=0; i < r; ++i) { */
-/* 	      for (j=0; j < *n-1; ++j) { */
-/* 		if(states[j]==i+1 && states[j+1]==i+1) { */
-/* 		  probJointStates[(*n-1)*((r*(r-1)/2 -1) + i) + j] =  */
-/* 		    (1.0 / (double)(times[r-1]+1 - burninTimes[r-1])) +  */
-/* 		    probJointStates[(*n-1)*((r*(r-1)/2 -1) + i) + j] *  */
-/* 		    (double)(times[r-1]+1 - burninTimes[r-1]-1) /  */
-/* 		    (double)(times[r-1]+1 - burninTimes[r-1]); */
-/* 		} */
-/* 		else { */
-/* 		  probJointStates[(*n-1)*((r*(r-1)/2 -1) + i) + j] =  */
-/* 		    probJointStates[(*n-1)*((r*(r-1)/2 -1) + i) + j] *  */
-/* 		    (double)(times[r-1]+1 - burninTimes[r-1] -1) /  */
-/* 		    (double)(times[r-1]+1 - burninTimes[r-1]); */
-/* 		} */
-/* 	      } */
-/* 	    } */
+	    /* Joint 2x2  */
+	    for (j=0; j < *n-1; ++j) {
+	      /* index for the array */
+	      jointIndex = (*n-1) * (((r*(r-1)*(2*(r-1)+1)) / 6) - 1);
+	      jointIndex = jointIndex + ((states[j]-1) * r * (*n-1));
+	      jointIndex = jointIndex + ((states[j+1]-1) * (*n-1));
+	      jointIndex = jointIndex + j;
+	      freqJointStates[jointIndex] = freqJointStates[jointIndex] + 1;
+	    }
 	  }
 	  for (i=0; i<r; ++i) {
 	    mu[indexMu[r-1] + (times[r-1]*r) + i] = NewMu[i];
@@ -1623,8 +1590,6 @@ void MetropolisSweep(double *y, double *x, int *genome, int *index,
       }
       k[2*t-1] = r;
 	
-      for(i=0; i<*kMax; ++i) {
-      }
       /*  Split or combine */
       /*  Old parameters */
       for (i=0; i<r; ++i) {
@@ -1683,24 +1648,15 @@ void MetropolisSweep(double *y, double *x, int *genome, int *index,
 		}
 	      }
 	    }
-	    /* Joint 2x2 probabilities */
-/* 	    for (i=0; i < r; ++i) { */
-/* 	      for (j=0; j < *n-1; ++j) { */
-/* 		if(states[j]==i+1 && states[j+1]==i+1) { */
-/* 		  probJointStates[(*n-1)*((r*(r-1)/2 -1) + i) + j] =  */
-/* 		    (1.0 / (double)(times[r-1]+1 - burninTimes[r-1])) +  */
-/* 		    probJointStates[(*n-1)*((r*(r-1)/2 -1) + i) + j] *  */
-/* 		    (double)(times[r-1]+1 - burninTimes[r-1]-1) /  */
-/* 		    (double)(times[r-1]+1 - burninTimes[r-1]); */
-/* 		} */
-/* 		else { */
-/* 		  probJointStates[(*n-1)*((r*(r-1)/2 -1) + i) + j] =  */
-/* 		    probJointStates[(*n-1)*((r*(r-1)/2 -1) + i) + j] *  */
-/* 		    (double)(times[r-1]+1 - burninTimes[r-1] -1) /  */
-/* 		    (double)(times[r-1]+1 - burninTimes[r-1]); */
-/* 		} */
-/* 	      } */
-/* 	    } */
+	    /* Joint 2x2  */
+	    for (j=0; j < *n-1; ++j) {
+	      /* index for the array */
+	      jointIndex = (*n-1) * (((r*(r-1)*(2*(r-1)+1)) / 6) - 1);
+	      jointIndex = jointIndex + ((states[j]-1) * r * (*n-1));
+	      jointIndex = jointIndex + ((states[j+1]-1) * (*n-1));
+	      jointIndex = jointIndex + j;
+	      freqJointStates[jointIndex] = freqJointStates[jointIndex] + 1;
+	    }
 	  }
 	  for (i=0; i<r; ++i) {
 	    mu[indexMu[r-1] + (times[r-1]*r) + i] = NewMu[i];
@@ -1751,24 +1707,15 @@ void MetropolisSweep(double *y, double *x, int *genome, int *index,
 		}
 	      }
 	    }
-	    /* Joint 2x2 probabilities */
-/* 	    for (i=0; i < r; ++i) { */
-/* 	      for (j=0; j < *n-1; ++j) { */
-/* 		if(states[j]==i+1 && states[j+1]==i+1) { */
-/* 		  probJointStates[(*n-1)*((r*(r-1)/2 -1) + i) + j] =  */
-/* 		    (1.0 / (double)(times[r-1]+1 - burninTimes[r-1])) +  */
-/* 		    probJointStates[(*n-1)*((r*(r-1)/2 -1) + i) + j] *  */
-/* 		    (double)(times[r-1]+1 - burninTimes[r-1]-1) /  */
-/* 		    (double)(times[r-1]+1 - burninTimes[r-1]); */
-/* 		} */
-/* 		else { */
-/* 		  probJointStates[(*n-1)*((r*(r-1)/2 -1) + i) + j] =  */
-/* 		    probJointStates[(*n-1)*((r*(r-1)/2 -1) + i) + j] *  */
-/* 		    (double)(times[r-1]+1 - burninTimes[r-1] -1) /  */
-/* 		    (double)(times[r-1]+1 - burninTimes[r-1]); */
-/* 		} */
-/* 	      } */
-/* 	    } */
+	    /* Joint 2x2  */
+	    for (j=0; j < *n-1; ++j) {
+	      /* index for the array */
+	      jointIndex = (*n-1) * (((r*(r-1)*(2*(r-1)+1)) / 6) - 1);
+	      jointIndex = jointIndex + ((states[j]-1) * r * (*n-1));
+	      jointIndex = jointIndex + ((states[j+1]-1) * (*n-1));
+	      jointIndex = jointIndex + j;
+	      freqJointStates[jointIndex] = freqJointStates[jointIndex] + 1;
+	    }
 	  }
 	  for (i=0; i<r; ++i) {
 	    mu[indexMu[r-1] + (times[r-1]*r) + i] = NewMu[i];
@@ -1791,7 +1738,7 @@ void MetropolisSweep(double *y, double *x, int *genome, int *index,
 	burninTimes[i] = times[i];
       }
     }
-}
+  }
 /*   delete []states; */
 /*   delete []loglikLast; */
 /*   delete []accepted; */
