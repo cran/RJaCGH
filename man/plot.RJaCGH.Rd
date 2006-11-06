@@ -75,10 +75,10 @@ plot.RJaCGH.array(x, method="averaging", weights=NULL, cex=1, ...)
 Pos <- runif(230)
 Pos <- cumsum(Pos)
 Chrom <- rep(1:23, rep(10, 23))
-jp <- list(sigma.tau.mu=rep(0.5, 5), sigma.tau.sigma.2=rep(0.3, 5),
-sigma.tau.beta=rep(0.7, 5), tau.split.mu=0.5, tau.split.beta=0.5)
+jp <- list(sigma.tau.mu=rep(0.5, 4), sigma.tau.sigma.2=rep(0.3, 4),
+           sigma.tau.beta=rep(0.7, 4), tau.split.mu=0.5, tau.split.beta=0.5)
 fit.Chrom <- RJaCGH(y=y, Pos=Pos, Chrom=Chrom, model="Chrom",
-burnin=100, TOT=1000, jump.parameters=jp)
+burnin=100, TOT=1000, jump.parameters=jp, k.max=4)
 plot(fit.Chrom)
 plot(fit.Chrom[[1]])}
 }

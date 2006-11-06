@@ -1,1 +1,13 @@
-0.2: Real Posterior probabilities of the sequence of hidden states via viterbi
+0.5:  states and model.averaging now returns joint probs of adjacent genes.
+     Automatic labelling of states
+0.4-3: Functions can take distance, not just position
+       Added preprint to inst/doc
+0.4-2: Now collapseChain recovers loglik and probs within model. Changed
+       slightly prior for mu.
+0.4-1: Fixed bug in plots that smooth arbitrarily too much in density plots
+0.4:   Fixed Windows crash (order of evaluation issue in Combine and Split).
+0.3-1: Use Calloc instead of R_alloc to try drive down memory usage.
+       Played with interrupts.
+0.3:   nnhl.cpp re-written as C (instead of C++) to try prevent crash under 
+       Windows.
+0.2:   Real Posterior probabilities of the sequence of hidden states via viterbi

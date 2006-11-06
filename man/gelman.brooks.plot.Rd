@@ -24,10 +24,23 @@ gelman.brooks.plot(obj, bin = 1000, array = NULL, Chrom = NULL, k = NULL)
 }
 \details{
   As described in the references, for every \code{bin} runs of the
-  chain, the R value of \code{k}, \code{mu}, \code{sigma.2} and \code{beta} are computed.
+  chain, the R value of \code{k}, \code{mu}, \code{sigma.2} and
+  \code{beta} are computed.
+  Please note that the input to this function must be a list of parallel
+  chains. If the convergence diagnostics returned by it are
+  satisfactory, then one can run \code{collapseChain} to join them all,
+  but one can not collapse all the chains and later run
+  \code{gelman.brooks.plot} to recover the diagnostics, because the list
+  of chains has been merged into one object.
+  
 }
 \value{
-  A plot showing the R values is drawn.
+  A plot with four panels showing the R values is drawn.
+  The first one shows the R value for the number of hidden states.
+  The second one shows the R values for the means of the most visited
+  model (there will be a R value for each mean).
+  The third and the four show the R values for variances and betas of
+  the most visited model.
   Besides, a list is returned with components
   \item{k}{R values for the numebr of states}
   \item{mu}{R values for the means of the states}
@@ -50,7 +63,7 @@ Oscar Rueda and Ramon Diaz Uriarte, in prep.}
 \examples{
 y <- c(rnorm(100, 0, 1), rnorm(10, -3, 1), rnorm(20, 3, 1),
        rnorm(100,0, 1)) 
-Pos <- runif(230)
+Pos <- sample(x=1:500, size=230, replace=TRUE)
 Pos <- cumsum(Pos)
 Chrom <- rep(1:23, rep(10, 23))
 

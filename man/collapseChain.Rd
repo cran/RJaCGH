@@ -28,6 +28,8 @@ collapseChain.RJaCGH.array(obj)
 If several parallel chains are run and if they converge (see
 \code{\link{gelman.brooks.plot}}) they should be joined in one. This is
 what this method does.
+Please note that this function returns only one object, so one can not
+call later \code{gelman.brooks.plot}.
 }
 \value{
 An object of the same class as any of the list \code{obj}.
@@ -43,7 +45,7 @@ An object of the same class as any of the list \code{obj}.
 \examples{
 y <- c(rnorm(100, 0, 1), rnorm(10, -3, 1), rnorm(20, 3, 1),
        rnorm(100,0, 1)) 
-Pos <- runif(230)
+Pos <- sample(x=1:500, size=230, replace=TRUE)
 Pos <- cumsum(Pos)
 Chrom <- rep(1:23, rep(10, 23))
 

@@ -7,16 +7,21 @@ This function fits a non-homogeneous hidden Markov model to CGH data
 through bayesian methods and Reversible Jump Markov chain Montecarlo.
 }
 \usage{
-RJaCGH(y, Chrom = NULL, Pos = NULL, model = "genome", burnin = 10000, TOT =
+RJaCGH(y, Chrom = NULL, Pos = NULL, Dist=NULL, model = "genome", burnin = 10000, TOT =
 10000, k.max = 6, stat = NULL, mu.alfa = NULL, mu.beta = NULL, ka = NULL,
-g = NULL, prob.k = NULL, jump.parameters=list(), start.k = NULL, RJ=TRUE)
+g = NULL, prob.k = NULL, jump.parameters=list(), start.k = NULL,
+RJ=TRUE, auto.label=0.60)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{y}{Vector with Log Ratio observations.}
   \item{Chrom}{Vector with Chromosome indicator. Must be numeric (1 to 23)}
   \item{Pos}{Vector with Positions of every gene. They can be absolute
-    to the genome or relative to the chromosome.}
+    to the genome or relative to the chromosome. They should be ordered
+    within every chromosome. This is, the arrays must be ordered by their
+  positions in the genome.}
+  \item{Dist}{Vector with distances between genes. In this version it
+    is still ignored, as distances are computed through Pos.}
   \item{model}{if \code{model}="genome", the same model is fitted for
     the whole genome. If \code{model}="Chrom", a different model is
     fitted for each chromosome.}
@@ -37,6 +42,8 @@ g = NULL, prob.k = NULL, jump.parameters=list(), start.k = NULL, RJ=TRUE)
     \code{prob.k} is chosen.}
   \item{RJ}{Logical. If TRUE, Reversible Jump is performed. If not, MCMC
     over a fixed number of hidden states.}
+  \item{auto.label}{If not NULL, should be the minimum proportion of
+  observations labeled as 'Normal'. See details.}
 }
 \details{
   RJaCGH fits the following bayesian model: There is a priori
@@ -47,7 +54,7 @@ g = NULL, prob.k = NULL, jump.parameters=list(), start.k = NULL, RJ=TRUE)
   
   The hidden states follow a normal distribution which mean (\code{mu}) follows
   itself a normal distribution with mean
-  \code{mu.alfa} and variance \code{mu.beta}. If NULL, these are the
+  \code{mu.alfa} and stdev \code{mu.beta}. If NULL, these are the
   median of the data and the range. The variance (\code{sigma.2})of the hidden states
   follows an Inverse Gamma distribution with parameters \code{ka} and
   \code{g}. If NULL, these are \code{2} and \code{diff(range(y))^2 / 50},
@@ -95,7 +102,17 @@ g = NULL, prob.k = NULL, jump.parameters=list(), start.k = NULL, RJ=TRUE)
   length \code{k.max}. \code{tau.split.mu},  \code{tau.split.beta} are vectors of
   length 1. If any of them is NULL, a call to the internal function
   \code{get.jump()} is made to find 'good' values.
+
+  A relabelling of hidden states is performed to label biological
+  states. The states whom have zero value in their IQR are labelled as
+  'Normal'. If no state is labelled as 'Normal', the closest state to
+  zero is chosen.
+  If \code{auto.label} is not null, closest states to 'Normal' are also
+  labelled as 'Normal' until a proportion of \code{auto.label} is
+  reached. Please note taht the default value is 0.60, so at least the
+  60\% of the observations will be labelled as 'Normal'.
   
+    
 }
 \value{
   The object returned follows a hierarchy: \newline
@@ -142,6 +159,7 @@ g = NULL, prob.k = NULL, jump.parameters=list(), start.k = NULL, RJ=TRUE)
     Metropolis-Hastings step.}
   \item{prob.beta}{probability of aceptance of \code{beta} in the
     Metropolis-Hastings step.}
+  \item{state.labels}{Labels of the biological states.}
 }
 \references{
   Oscar Rueda and Ramon Diaz Uriarte, in prep.
@@ -163,12 +181,12 @@ g = NULL, prob.k = NULL, jump.parameters=list(), start.k = NULL, RJ=TRUE)
 \examples{
 y <- c(rnorm(100, 0, 1), rnorm(10, -3, 1), rnorm(20, 3, 1),
        rnorm(100,0, 1)) 
-Pos <- runif(230)
+Pos <- sample(x=1:500, size=230, replace=TRUE)
 Pos <- cumsum(Pos)
 Chrom <- rep(1:23, rep(10, 23))
 
-jp <- list(sigma.tau.mu=rep(0.5, 4), sigma.tau.sigma.2=rep(0.3, 4),
-           sigma.tau.beta=rep(0.7, 4), tau.split.mu=0.5, tau.split.beta=0.5)
+jp <- list(sigma.tau.mu=rep(0.05, 4), sigma.tau.sigma.2=rep(0.03, 4),
+           sigma.tau.beta=rep(0.07, 4), tau.split.mu=0.1, tau.split.beta=0.1)
 
 fit.chrom <- RJaCGH(y=y, Pos=Pos, Chrom=Chrom, model="Chrom",
                     burnin=10, TOT=1000, k.max = 4,

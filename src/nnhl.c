@@ -212,8 +212,8 @@ void normalNHHMMlikelihood(double *y, int *k, double *x,
 	  /*  			Q[hidden_state][hidden_state_b] = Q1 * Q2; */
 			
 	  Q[hidden_state][hidden_state_b] = 
-	    exp(q[hidden_state_b * *k + hidden_state] + 
-		beta[hidden_state_b * *k + hidden_state] * x_i);
+	    exp(q[hidden_state_b * *k + hidden_state] *
+		(1- x_i));
 
 	  rowSumsQ += Q[hidden_state][hidden_state_b];
 	}
@@ -275,7 +275,7 @@ void Birth(double *y, int *genome, int *index, double *mu, double *sigma2,
       /*  we can try to adapt sigma2 */
       candidatoSigma2[i] = sigma2[i];
     }
-    candidatoMu[*r] = rnorm(*muAlfa, sqrt(*muBeta));
+    candidatoMu[*r] = rnorm(*muAlfa, *muBeta);
     candidatoSigma2[*r] = 1 / rgamma(*ka, 1 / *g);
     if (candidatoSigma2[*r] > *maxVar) reachedMaxVar = 1;
 
@@ -563,7 +563,7 @@ void Split(double *y, int *genome, int *index, double *mu, double *sigma2,
   double distSplit= fabs(candidatoMu[split] - candidatoMu[split-1]);
   int valid = 0;
   for (i=0; i<*r+1; ++i) {
-    if ((i != split-1) & (i != split)) {
+    if ((i != split-1) && (i != split)) {
       if ((distSplit < fabs(candidatoMu[i] - candidatoMu[split-1])) |
 	  (distSplit < fabs(candidatoMu[i] - candidatoMu[split])))
 	valid = 1;
@@ -577,12 +577,12 @@ void Split(double *y, int *genome, int *index, double *mu, double *sigma2,
     probSplit = log(probK[*r]) - log(probK[*r-1]);
     /*  sum of priors */
     for (i=0; i<(*r+1); ++i) {
-      probSplit = probSplit + dnorm(candidatoMu[i], *muAlfa, sqrt(*muBeta), 1);
+      probSplit = probSplit + dnorm(candidatoMu[i], *muAlfa, *muBeta, 1);
       dinvgamma(&candidatoSigma2[i], ka, g, 1, &priorCandidatoSigma2);
       probSplit = probSplit + priorCandidatoSigma2;
     }
     for (i=0; i<*r; ++i) {
-      probSplit = probSplit - dnorm(mu[i], *muAlfa, sqrt(*muBeta), 1);
+      probSplit = probSplit - dnorm(mu[i], *muAlfa, *muBeta, 1);
       dinvgamma(&sigma2[i], ka, g, 1, &priorSigma2);
       probSplit = probSplit - priorSigma2;
     }
@@ -796,12 +796,12 @@ void Combine(double *y, int *genome, int *index, double *mu, double *sigma2,
     probCombine = log(probK[*r-1]) - log(probK[*r-2]);
     /*  sum of priors */
     for (i=0; i<*r; ++i) {
-      probCombine = probCombine + dnorm(mu[i], *muAlfa, sqrt(*muBeta), 1);
+      probCombine = probCombine + dnorm(mu[i], *muAlfa, *muBeta, 1);
       dinvgamma(&sigma2[i], ka, g, 1, &priorSigma2);
       probCombine = probCombine + priorSigma2;
     }
     for (i=0; i<(*r-1); ++i) {
-      probCombine = probCombine - dnorm(candidatoMu[i], *muAlfa, sqrt(*muBeta), 1);
+      probCombine = probCombine - dnorm(candidatoMu[i], *muAlfa, *muBeta, 1);
       dinvgamma(&candidatoSigma2[i], ka, g, 1, &priorCandidatoSigma2);
       probCombine = probCombine - priorCandidatoSigma2;
     }
@@ -919,8 +919,8 @@ void MetropolisUpdate(double *y, double *x, int *genome, int *index, double *mu,
   acepProb = 0;
   for(i=0; i<*r; ++i) {
     candidatoMu[i] = mu[i] + rnorm(0, *sigmaTauMu);
-    acepProb = acepProb + dnorm(candidatoMu[i], *muAlfa, sqrt(*muBeta), 1) -
-      dnorm(mu[i], *muAlfa, sqrt(*muBeta), 1);
+    acepProb = acepProb + dnorm(candidatoMu[i], *muAlfa, *muBeta, 1) -
+      dnorm(mu[i], *muAlfa, *muBeta, 1);
   }
   
   for (i=0; i<(*r * *r); ++i) {
@@ -1158,7 +1158,7 @@ void MetropolisSweep(double *y, double *x, int *genome, int *index,
 		     int *k, double *mu, double *sigma2,
 		     double *beta, double *stat, 
 		     int *startK, int *RJ, double *maxVar, 
-		     double *probStates, double *loglik)  {
+		     double *probStates, double *probJointStates, double *loglik)  {
 
   /*  Verify we can run */
 /*   We assume at least 32-bit integers, which is good enough. FIXME: do the check*/
@@ -1347,6 +1347,7 @@ void MetropolisSweep(double *y, double *x, int *genome, int *index,
 	      states);
       for (m=0; m < i-1; ++m) {
 	for (j=0; j < *n; ++j) {
+	  /* Marginal probabilities */
 	  if(states[j]==m+1) {
 	    probStates[(*n * (m + (i-1) * (i-2) / 2)) + j] = 
 	      (1.0 / (double)(times[i-1]+1)) + 
@@ -1360,9 +1361,26 @@ void MetropolisSweep(double *y, double *x, int *genome, int *index,
 	  }
 	}
       }
+      /* Joint 2x2 probabilities */
+/*       for (m=0; m < i; ++m) { */
+/* 	for (j=0; j < *n-1; ++j) { */
+/* 	  if(states[j]==m+1 && states[j+1]==m+1) { */
+/* 	    probJointStates[(*n-1)*((i*(i-1)/2 -1) + m) + j] =  */
+/* 	      	      (1.0 / (double)(times[i-1]+1)) +  */
+/* 	      	      probJointStates[(*n-1)*((i*(i-1)/2 -1) + m) + j] *  */
+/* 	      	      (double)(times[i-1]+1 -1) / (double)(times[i-1]+1); */
+	    
+/* 	  } */
+/* 	  else { */
+/* 	    probJointStates[(*n-1)*((i*(i-1)/2 -1) + m) + j] = */
+/* 	      probJointStates[(*n-1)*((i*(i-1)/2 -1) + m) + j] * */
+/* 	      (double)(times[i-1]+1 -1) / (double)(times[i-1]+1); */
+/* 	  } */
+/* 	} */
+/*       } */
     }
-
   }
+  
   if (*startK==0) r = (int)rint(runif(1, *kMax));
   else r = *startK;
 
@@ -1376,7 +1394,6 @@ void MetropolisSweep(double *y, double *x, int *genome, int *index,
     /* Allow R interrupts; check every 100 iterations */
     if (!(t % 100))
       R_CheckUserInterrupt(); 
-
 
     /* METROPOLIS UPDATE */
     /* old parameters */
@@ -1407,7 +1424,7 @@ void MetropolisSweep(double *y, double *x, int *genome, int *index,
 
 
     /*  viterbi */
-    if ((t > *burnin) & (r >1)) {
+    if ((t > *burnin) && (r >1)) {
       viterbi(y, x, genome, index, &r, n, OldMu, AuxSigma2, AuxBeta, OldStat,
 	      states);
       for (i=0; i < r-1; ++i) {
@@ -1427,6 +1444,24 @@ void MetropolisSweep(double *y, double *x, int *genome, int *index,
 	  }
 	}
       }
+      /* Joint 2x2 probabilities */
+     /*  for (i=0; i < r; ++i) { */
+/* 	for (j=0; j < *n-1; ++j) { */
+/* 	  if(states[j]==i+1 && states[j+1]==i+1) { */
+/* 	    probJointStates[(*n-1)*((r*(r-1)/2 -1) + i) + j] =  */
+/* 	      	      (1.0 / (double)(times[r-1]+1 - burninTimes[r-1])) +  */
+/* 	      	      probJointStates[(*n-1)*((r*(r-1)/2 -1) + i) + j] *  */
+/* 	      	      (double)(times[r-1]+1 - burninTimes[r-1]-1) /  */
+/* 	      	      (double)(times[r-1]+1 - burninTimes[r-1]); */
+/* 	  } */
+/* 	  else { */
+/* 	    	    probJointStates[(*n-1)*((r*(r-1)/2 -1) + i) + j] =  */
+/* 	      	      probJointStates[(*n-1)*((r*(r-1)/2 -1) + i) + j] *  */
+/* 	      	      (double)(times[r-1]+1 - burninTimes[r-1] -1) /  */
+/* 	      	      (double)(times[r-1]+1 - burninTimes[r-1]); */
+/* 	  } */
+/* 	} */
+/*       } */
     }
     /*  save updates */
     for (i=0; i <r; ++i) {
@@ -1467,7 +1502,7 @@ void MetropolisSweep(double *y, double *x, int *genome, int *index,
 		NewBeta[(indexPerm[i]-1)*r + indexPerm[j]-1];
 	    
 	  /*  viterbi */
-	  if ((t > *burnin) & (r >1)) {
+	  if ((t > *burnin) && (r >1)) {
 	    viterbi(y, x, genome, index, &r, n, NewMu, AuxSigma2, AuxBeta, NewStat,
 		    states);
 	    for (i=0; i < r-1; ++i) {
@@ -1487,8 +1522,25 @@ void MetropolisSweep(double *y, double *x, int *genome, int *index,
 		}
 	      }
 	    }
+	    /* Joint 2x2 probabilities */
+	/*     for (i=0; i < r; ++i) { */
+/* 	      for (j=0; j < *n-1; ++j) { */
+/* 		if(states[j]==i+1 && states[j+1]==i+1) { */
+/* 		  probJointStates[(*n-1)*((r*(r-1)/2 -1) + i) + j] =  */
+/* 		    (1.0 / (double)(times[r-1]+1 - burninTimes[r-1])) +  */
+/* 		    probJointStates[(*n-1)*((r*(r-1)/2 -1) + i) + j] *  */
+/* 		    (double)(times[r-1]+1 - burninTimes[r-1]-1) /  */
+/* 		    (double)(times[r-1]+1 - burninTimes[r-1]); */
+/* 		} */
+/* 		else { */
+/* 		  probJointStates[(*n-1)*((r*(r-1)/2 -1) + i) + j] =  */
+/* 		    probJointStates[(*n-1)*((r*(r-1)/2 -1) + i) + j] *  */
+/* 		    (double)(times[r-1]+1 - burninTimes[r-1] -1) /  */
+/* 		    (double)(times[r-1]+1 - burninTimes[r-1]); */
+/* 		} */
+/* 	      } */
+/* 	    } */
 	  }
-
 	  for (i=0; i<r; ++i) {
 	    mu[indexMu[r-1] + (times[r-1]*r) + i] = NewMu[i];
 	    sigma2[indexMu[r-1] + (times[r-1]*r) +i] = NewSigma2[indexPerm[i]-1];
@@ -1517,7 +1569,7 @@ void MetropolisSweep(double *y, double *x, int *genome, int *index,
 	  *accepted = 0;
 	  *probD = *probD + 1;
 	  /*  viterbi */
-	  if ((t > *burnin) & (r >1)) {
+	  if ((t > *burnin) && (r >1)) {
 	    viterbi(y, x, genome, index, &r, n, NewMu, NewSigma2, NewBeta, NewStat,
 		    states);
 
@@ -1538,8 +1590,25 @@ void MetropolisSweep(double *y, double *x, int *genome, int *index,
 		}
 	      }
 	    }
+	    /* Joint 2x2 probabilities */
+/* 	    for (i=0; i < r; ++i) { */
+/* 	      for (j=0; j < *n-1; ++j) { */
+/* 		if(states[j]==i+1 && states[j+1]==i+1) { */
+/* 		  probJointStates[(*n-1)*((r*(r-1)/2 -1) + i) + j] =  */
+/* 		    (1.0 / (double)(times[r-1]+1 - burninTimes[r-1])) +  */
+/* 		    probJointStates[(*n-1)*((r*(r-1)/2 -1) + i) + j] *  */
+/* 		    (double)(times[r-1]+1 - burninTimes[r-1]-1) /  */
+/* 		    (double)(times[r-1]+1 - burninTimes[r-1]); */
+/* 		} */
+/* 		else { */
+/* 		  probJointStates[(*n-1)*((r*(r-1)/2 -1) + i) + j] =  */
+/* 		    probJointStates[(*n-1)*((r*(r-1)/2 -1) + i) + j] *  */
+/* 		    (double)(times[r-1]+1 - burninTimes[r-1] -1) /  */
+/* 		    (double)(times[r-1]+1 - burninTimes[r-1]); */
+/* 		} */
+/* 	      } */
+/* 	    } */
 	  }
-
 	  for (i=0; i<r; ++i) {
 	    mu[indexMu[r-1] + (times[r-1]*r) + i] = NewMu[i];
 	    sigma2[indexMu[r-1] + (times[r-1]*r) + i] = NewSigma2[i];
@@ -1594,7 +1663,7 @@ void MetropolisSweep(double *y, double *x, int *genome, int *index,
 		NewBeta[(indexPerm[i]-1)*r + indexPerm[j]-1];
 
 	  /*  viterbi */
-	  if ((t > *burnin) & (r >1)) {
+	  if ((t > *burnin) && (r >1)) {
 	    viterbi(y, x, genome, index, &r, n, NewMu, AuxSigma2, AuxBeta, NewStat,
 		    states);
 	    for (i=0; i < r-1; ++i) {
@@ -1614,8 +1683,25 @@ void MetropolisSweep(double *y, double *x, int *genome, int *index,
 		}
 	      }
 	    }
+	    /* Joint 2x2 probabilities */
+/* 	    for (i=0; i < r; ++i) { */
+/* 	      for (j=0; j < *n-1; ++j) { */
+/* 		if(states[j]==i+1 && states[j+1]==i+1) { */
+/* 		  probJointStates[(*n-1)*((r*(r-1)/2 -1) + i) + j] =  */
+/* 		    (1.0 / (double)(times[r-1]+1 - burninTimes[r-1])) +  */
+/* 		    probJointStates[(*n-1)*((r*(r-1)/2 -1) + i) + j] *  */
+/* 		    (double)(times[r-1]+1 - burninTimes[r-1]-1) /  */
+/* 		    (double)(times[r-1]+1 - burninTimes[r-1]); */
+/* 		} */
+/* 		else { */
+/* 		  probJointStates[(*n-1)*((r*(r-1)/2 -1) + i) + j] =  */
+/* 		    probJointStates[(*n-1)*((r*(r-1)/2 -1) + i) + j] *  */
+/* 		    (double)(times[r-1]+1 - burninTimes[r-1] -1) /  */
+/* 		    (double)(times[r-1]+1 - burninTimes[r-1]); */
+/* 		} */
+/* 	      } */
+/* 	    } */
 	  }
-
 	  for (i=0; i<r; ++i) {
 	    mu[indexMu[r-1] + (times[r-1]*r) + i] = NewMu[i];
 	    sigma2[indexMu[r-1] + (times[r-1]*r) + i] = NewSigma2[indexPerm[i]-1];
@@ -1645,7 +1731,7 @@ void MetropolisSweep(double *y, double *x, int *genome, int *index,
 	  *probC = *probC +1;
 	  *accepted = 0;
 	  /*  viterbi */
-	  if ((t > *burnin) & (r >1)) {
+	  if ((t > *burnin) && (r >1)) {
 	    viterbi(y, x, genome, index, &r, n, NewMu, NewSigma2, NewBeta, NewStat,
 		    states);
 	    for (i=0; i < r-1; ++i) {
@@ -1665,6 +1751,24 @@ void MetropolisSweep(double *y, double *x, int *genome, int *index,
 		}
 	      }
 	    }
+	    /* Joint 2x2 probabilities */
+/* 	    for (i=0; i < r; ++i) { */
+/* 	      for (j=0; j < *n-1; ++j) { */
+/* 		if(states[j]==i+1 && states[j+1]==i+1) { */
+/* 		  probJointStates[(*n-1)*((r*(r-1)/2 -1) + i) + j] =  */
+/* 		    (1.0 / (double)(times[r-1]+1 - burninTimes[r-1])) +  */
+/* 		    probJointStates[(*n-1)*((r*(r-1)/2 -1) + i) + j] *  */
+/* 		    (double)(times[r-1]+1 - burninTimes[r-1]-1) /  */
+/* 		    (double)(times[r-1]+1 - burninTimes[r-1]); */
+/* 		} */
+/* 		else { */
+/* 		  probJointStates[(*n-1)*((r*(r-1)/2 -1) + i) + j] =  */
+/* 		    probJointStates[(*n-1)*((r*(r-1)/2 -1) + i) + j] *  */
+/* 		    (double)(times[r-1]+1 - burninTimes[r-1] -1) /  */
+/* 		    (double)(times[r-1]+1 - burninTimes[r-1]); */
+/* 		} */
+/* 	      } */
+/* 	    } */
 	  }
 	  for (i=0; i<r; ++i) {
 	    mu[indexMu[r-1] + (times[r-1]*r) + i] = NewMu[i];
@@ -1687,7 +1791,7 @@ void MetropolisSweep(double *y, double *x, int *genome, int *index,
 	burninTimes[i] = times[i];
       }
     }
-  }
+}
 /*   delete []states; */
 /*   delete []loglikLast; */
 /*   delete []accepted; */
@@ -1709,8 +1813,8 @@ void MetropolisSweep(double *y, double *x, int *genome, int *index,
 
 
 
-  Free(states);
-  Free(loglikLast);
+Free(states);
+Free(loglikLast);
   Free(accepted);
   Free(q);
   Free(indexMu);
@@ -1729,5 +1833,5 @@ void MetropolisSweep(double *y, double *x, int *genome, int *index,
   Free(indexPerm);
   
   PutRNGstate();
-}
+  }
 
