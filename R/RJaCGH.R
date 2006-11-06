@@ -329,16 +329,27 @@ MetropolisSweep.C <- function(y, x, k.max, Chrom, model=NULL, burnin, TOT, prob.
   
   obj$k <- res$k[-c(1:(2*burnin+1))]
   obj$k <- factor(obj$k , levels=1:k.max)
+
   ## Relabel states
-  p.labels <- 0.25 ## should be a parameter??
+  p.labels <- 0.95 ## should be a parameter??
   for (i in 1:k.max) {
     if (table(obj$k)[i] > 0) {
       obj.sum <- summary.RJaCGH(obj, k=i, point.estimator="median")
       normal.levels <- (qnorm(mean=obj.sum$mu,
                               sd=sqrt(obj.sum$sigma.2),
-                              p=p.labels) < 0 &
+                              p=(1-p.labels)/2) < 0 &
                         qnorm(mean=obj.sum$mu, sd=sqrt(obj.sum$sigma.2),
-                              p=1-p.labels) > 0)
+                              p=1-(1-p.labels)/2) > 0)
+      ## bug fix to prevent a case
+      ## in which normal.levels are
+      ## ...TRUE FALSE TRUE...
+      if (sum(normal.levels) >0) {
+        normal.levels[!normal.levels][obj.sum$mu[!normal.levels] > min(obj.sum$mu[normal.levels]) &
+                                      obj.sum$mu[!normal.levels] < max(obj.sum$mu[normal.levels])] <- 
+                                        TRUE
+      }
+      ##
+      ##
       n.Norm <- sum(normal.levels)
       if (n.Norm <=0) {
         normal.levels <- rep(FALSE, i)
@@ -376,6 +387,7 @@ MetropolisSweep.C <- function(y, x, k.max, Chrom, model=NULL, burnin, TOT, prob.
       }
   
   ##
+
       
     }
   }    
@@ -640,7 +652,6 @@ RJaCGH <- function(y, Chrom=NULL, Pos=NULL, Dist=NULL, model="genome", burnin=10
   }
      
 }
-
 summary.RJaCGH <- function(object, k=NULL, point.estimator="median", ...) {
   res <- list()
   res$y <- object$y
@@ -651,11 +662,11 @@ summary.RJaCGH <- function(object, k=NULL, point.estimator="median", ...) {
   res$stat <- object[[k]]$stat
   if (point.estimator=="mode") {
       dens <- apply(object[[k]]$mu, 2, density, bw="nrd0")
-      res$mu <- unlist(lapply(dens, function(x) x$x[which.max(object$y)]))
+      res$mu <- unlist(lapply(dens, function(x) x$x[which.max(x$y)]))
       dens <- apply(object[[k]]$sigma.2, 2, density, bw="nrd0")
-      res$sigma.2 <- unlist(lapply(dens, function(x) x$x[which.max(object$y)]))
-      dens <- apply(x[[k]]$beta, c(1,2), density, bw="nrd0")
-      res$beta <- unlist(lapply(dens, function(x) x$x[which.max(object$y)]))
+      res$sigma.2 <- unlist(lapply(dens, function(x) x$x[which.max(x$y)]))
+      dens <- apply(object[[k]]$beta, c(1,2), density, bw="nrd0")
+      res$beta <- unlist(lapply(dens, function(x) x$x[which.max(x$y)]))
       res$beta <- matrix(res$beta, k)
       diag(res$beta) <- 0
     }
@@ -1517,13 +1528,25 @@ collapseChain.RJaCGH <- function(obj) {
   ## Recompute state labels
   for (i in 1:k) {
     if (table(newobj$k)[i] > 0) {
-      p.labels <- 0.25 ## should be a parameter??
+      p.labels <- 0.95 ## should be a parameter??
       obj.sum <- summary.RJaCGH(newobj, k=i, point.estimator="median")
       normal.levels <- (qnorm(mean=obj.sum$mu,
                               sd=sqrt(obj.sum$sigma.2),
-                              p=p.labels) < 0 &
+                              p=(1-p.labels)/2) < 0 &
                         qnorm(mean=obj.sum$mu, sd=sqrt(obj.sum$sigma.2),
-                              p=1-p.labels) > 0)
+                              p=1-(1-p.labels)/2) > 0)
+
+      ## bug fix to prevent a case
+      ## in which normal.levels are
+      ## ...TRUE FALSE TRUE...
+      if (sum(normal.levels) <0) {
+        normal.levels[!normal.levels][obj.sum$mu[!normal.levels] > min(obj.sum$mu[normal.levels]) &
+                                      obj.sum$mu[!normal.levels] < max(obj.sum$mu[normal.levels])] <- 
+                                        TRUE
+      }
+      ##
+      ##
+
       n.Norm <- sum(normal.levels)
       if (n.Norm <=0) {
         normal.levels <- rep(FALSE, i)
