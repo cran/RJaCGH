@@ -19,8 +19,8 @@ RJ=TRUE, auto.label=0.60)
   \item{Pos}{Vector with Positions of every gene. They can be absolute
     to the genome or relative to the chromosome. They should be ordered
     within every chromosome. This is, the arrays must be ordered by their
-  positions in the genome.}
-  \item{Dist}{Vector of distances between genes. It should be a vector
+  positions in the genome. They must be integers.}
+  \item{Dist}{Optional vector of distances between genes. It should be a vector
     of length \code{length(y)-1}. Note that when \code{Chrom} is not NULL,
     every last value of every Chromosome is not used.}
   \item{model}{if \code{model}="genome", the same model is fitted for
@@ -64,12 +64,12 @@ RJ=TRUE, auto.label=0.60)
   
   The model for the transition matrix is based on a random matrix
   \code{beta} whose diagonal is zero. The transition matrix, \code{Q},
-  has the form: \newline
+  has the form:
     Q[i,j] = exp(-beta[i,j] + beta[i,j]*x) / sum(i,.) {exp(-beta[i,.] +
       beta[i,.]*x}
 
     
-  The prior distribution for \code{beta} is gamma with parameters 1, 1. \newline
+  The prior distribution for \code{beta} is gamma with parameters 1, 1. 
   The \code{x} are the distances between positions, normalized to lay
   between zero and 1 (\code{x=diff(Pos) / max(diff(Pos))})
 
@@ -118,7 +118,8 @@ RJ=TRUE, auto.label=0.60)
     
 }
 \value{
-  The object returned follows a hierarchy: \newline
+  The object returned follows a hierarchy:
+  
   If y is a matrix or data.frame (i.e., several arrays), an object of
   class \code{RJaCGH.array} is returned, with components:
   \item{[[]]}{A list with an object of corresponding class (see below) for
@@ -136,21 +137,23 @@ RJ=TRUE, auto.label=0.60)
   \item{Pos}{Pos vector.}
   \item{model}{model.}
   \item{Chrom}{Chromosome vector.}
-  \item{x}{x vector of distances between genes.} \newline
+  \item{x}{x vector of distances between genes.}
   If \code{model} is "Chrom", an object of class \code{RJaCGH.Chrom} is
   returned, with the following components:
   \item{[[]]}{a list with as many components as chromosomes, of class
     \code{RJaCGH} (See below).}
   \item{Pos}{Pos vector.}
   \item{model}{model.}
-  \item{Chrom}{Chromosome vector.} \newline
+  \item{Chrom}{Chromosome vector.}
+  
   If no \code{model} was specified and no \code{Chrom} was given, an
   object of class \code{RJaCGH} is returned, with components \code{k},
   \code{prob.b}, \code{prob.d}, \code{prob.s}, \code{prob.c}, \code{y},
   \code{Pos}, \code{x} as described before, plus a list with as many
   components of number of max hidden states fitted.
   For every hidden markov model fitted, a list is returned with
-  components: \newline
+  components:
+  
   \item{mu}{a matrix with the means sampled}
   \item{sigma.2}{a matrix with the variances sampled}
   \item{beta}{an array of dimension 3 with beta values sampled}

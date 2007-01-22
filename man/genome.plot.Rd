@@ -15,10 +15,11 @@ genome.plot(obj, col = NULL, breakpoints = NULL)
   \item{col}{ A vector of length \texttt{k} for the color of every range
     of probabilities of alteration, starting from loss to gain. }
   \item{breakpoints}{ A vector of length \texttt{k-1} for the
-    breakpoints of the color key. }
+    breakpoints of the color key. The corresponding to losses must be
+    negative. See example for details.}
 }
 \details{
-If \texttt{col} and \texttt{breakpoints} are \texttt{NULL}, a default
+If \code{col} and \code{breakpoints} are \code{NULL}, a default
 color key is drawn.
 }
 \value{
@@ -32,6 +33,9 @@ color key is drawn.
   {http://biostats.bepress.com/cobra/ps/art9/}.
 }
 \author{Oscar M. Rueda and Ramon Diaz Uriarte}
+
+\note{The positions of the genes should be relative to the chromosome
+  for the plot to make sense.}
 
 \examples{
 data(snijders)

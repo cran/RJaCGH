@@ -433,7 +433,7 @@ RJMCMC.NH.HMM.Metropolis <- function(y, Chrom=NULL, x=NULL, index=NULL, model=NU
   res <- list()
   x.old <- x
   ## if all distances are the same, they should be zero
-  if (is.null(x) | isTRUE(all.equal(min(x.old), max(x.old)))) {
+  if (is.null(x) | isTRUE(all.equal(min(x.old, na.rm=TRUE), max(x.old, na.rm=TRUE)))) {
     x <- rep(0, length(y)-1) ## zz:??? a "rep"?
   }
   ## Scale x'2 to avoid overflow
@@ -449,7 +449,6 @@ RJMCMC.NH.HMM.Metropolis <- function(y, Chrom=NULL, x=NULL, index=NULL, model=NU
   if(is.null(mu.beta)) mu.beta <- diff(range(y))
   if(is.null(ka)) ka <- 2
   if(is.null(g)) g <- diff(range(y))^2 / 50
-
 
   ## Prior over the number of states  ####################
 
@@ -1026,6 +1025,10 @@ plot.RJaCGH.Chrom <- function(x, Chrom="genome",
     ## Start of every Chromosome
     start.Chrom <- c(Pos[1], Pos[diff(x$Chrom)!=0], Pos[length(Pos)])
     xx <- rep(start.Chrom, rep(2, length(start.Chrom)))
+    ## small hack for the case with even number of chroms
+    if (length(start.Chrom) %% 2 !=0) {
+      xx <- xx[-c(length(xx)-1, length(xx))]
+    }
     yy <- rep(c(ylim, rev(ylim)), length(start.Chrom)/2)
     plot(y~Pos, pch=pch, col=col, ylim=ylim, ylab="Log2 ratio", xlab="Pos.Base",
          main=main.text, type="n")
@@ -1111,6 +1114,10 @@ plot.RJaCGH.genome <- function(x, k=NULL,
   ## Start of every Chromosome
   start.Chrom <- c(x$Pos[1], x$Pos[diff(x$Chrom)!=0], x$Pos[length(x$Pos)])
   xx <- rep(start.Chrom, rep(2, length(start.Chrom)))
+  ## small hack for the case with even number of chroms
+  if (length(start.Chrom) %% 2 !=0) {
+    xx <- xx[-c(length(xx)-1, length(xx))]
+  }
   yy <- rep(c(ylim, rev(ylim)), length(start.Chrom)/2)
 
   plot(x$y~x$Pos, pch=pch, col=col, ylim=ylim, ylab="Log2 ratio", xlab="Pos.Base",
@@ -1184,6 +1191,10 @@ plot.RJaCGH.array <- function(x,method="averaging", weights=NULL,
     ## Start of every Chromosome
     start.Chrom <- c(Pos[1], Pos[diff(x[[1]]$Chrom)!=0], Pos[length(Pos)])
     xx <- rep(start.Chrom, rep(2, length(start.Chrom)))
+    ## small hack for the case with even number of chroms
+    if (length(start.Chrom) %% 2 !=0) {
+      xx <- xx[-c(length(xx)-1, length(xx))]
+    }
     yy <- rep(c(ylim, rev(ylim)), length(start.Chrom)/2)
     plot(y~Pos, pch=pch, col=col, ylim=ylim, ylab="Mean Log Ratio of the arrays",
          xlab="Pos.Base",
@@ -1237,7 +1248,7 @@ plot.RJaCGH.array <- function(x,method="averaging", weights=NULL,
    col <- rep(1, length(states))
    col[states >= 50] <- 2
    col[states <= -50] <- 3
-   pch <- rep(16, length(y))
+   pch <- rep(16, length(states))
    ylim <- c(-100, 100)
    margin <- 4
    ylim[1] <- ylim[1] - margin - 1
@@ -1245,6 +1256,10 @@ plot.RJaCGH.array <- function(x,method="averaging", weights=NULL,
    ## Start of every Chromosome
    start.Chrom <- c(Pos[1], Pos[diff(x[[1]]$Chrom)!=0], Pos[length(Pos)])
    xx <- rep(start.Chrom, rep(2, length(start.Chrom)))
+   ## small hack for the case with even number of chroms
+   if (length(start.Chrom) %% 2 !=0) {
+     xx <- xx[-c(length(xx)-1, length(xx))]
+   }
    yy <- rep(c(ylim, rev(ylim)), length(start.Chrom)/2)
    plot(states~Pos, pch=pch, col=col, ylim=ylim, ylab="Percent of copy gain/loss in all arrays",
         xlab="Pos.Base",
@@ -2655,7 +2670,7 @@ genome.plot <- function(obj, col=NULL, breakpoints=NULL) {
     breakpoints <- c(-0.9, -0.7, -0.5, 0.5, 0.7, 0.9)
   }
   MidPoint <- floor(length(col)/2)
-  colo.recoded[colo.round <=-breakpoints[1]] <- col[1]
+  colo.recoded[colo.round <= -breakpoints[1]] <- col[1]
   label.legend <- paste("P.Loss >= ", -breakpoints[1], sep="")
   if (length(breakpoints) > 2) {
     for (i in 2:MidPoint) {
@@ -2667,8 +2682,8 @@ genome.plot <- function(obj, col=NULL, breakpoints=NULL) {
   }
   colo.recoded[colo.round > breakpoints[MidPoint] & colo.round <
     breakpoints[MidPoint +1]] <- col[MidPoint +1]
-  label.legend <- c(label.legend, paste("P.Loss < ", -breakpoints[i-1],
-                                        " or P.Gain >= ", breakpoints[i], sep=""))
+  label.legend <- c(label.legend, paste("P.Loss < ", -breakpoints[MidPoint],
+                                        " or P.Gain >= ", breakpoints[MidPoint+1], sep=""))
   
   if (length(breakpoints) > 2) {
     for (i in (MidPoint+2):length(breakpoints)) {

@@ -1,3 +1,8 @@
+1.0,1: Bug fixing: 
+       labels in legend of genome.plot
+       plot.RJaCGH.array with an even number of chromosomes
+       positions must be integers (bases, not Kb).
+       (Thanks to Joao Fadista).
 1.0.0: Probabilistic minimal commmon regions.
       Plot for the genome (genome.plot).
 0.5.: Bug fix in summary.RJaCGH (thanks to Douglas Grove).
