@@ -1,3 +1,5 @@
+1.0.2: Bug Fixing:
+       when model=genome there had to be 23 chromosomes
 1.0,1: Bug fixing: 
        labels in legend of genome.plot
        plot.RJaCGH.array with an even number of chromosomes

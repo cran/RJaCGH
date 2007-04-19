@@ -382,13 +382,18 @@ MetropolisSweep.C <- function(y, x, k.max, Chrom, model=NULL, burnin, TOT, prob.
                                    k=i)$mu))
         freqs <- prop.table(table(states))
         labels <- names(freqs)
-        means <- obj.sum$mu
-        means.order <- order(abs(means))
-        tot.norm <- freqs['Normal']
+        means <- summary.RJaCGH(obj, k=i)$mu
+        means.1 <- abs(means - max(means[names(means)=='Normal']))
+        means.2 <- abs(means - min(means[names(means)=='Normal']))
+        means <- pmin(means.1, means.2)
+        means.order <- order(means)
+        names(means.order) <- names(means)[order(means)]
+        means.order <- means.order[names(means.order) != 'Normal']
+        tot.norm <- sum(freqs[names(freqs)=='Normal'])
         ind.tot <- 1
         while(tot.norm <= auto.label) {
-          labels[means.order][ind.tot+1] <- "Normal"
-          tot.norm <- tot.norm + freqs[means.order][ind.tot+1]
+          labels[means.order][ind.tot] <- "Normal"
+          tot.norm <- tot.norm + freqs[means.order][ind.tot]
           ind.tot <- ind.tot + 1
         }
         obj[[i]]$state.labels <- labels
@@ -607,7 +612,7 @@ RJaCGH.one.array <- function(y, Chrom=NULL, Pos=NULL, Dist=NULL, model="genome",
       else {
         chrom.Pos <- Pos
         chrom.Dist <- diff(chrom.Pos) -1
-        for (i in 1:23) 
+        for (i in unique(Chrom)) 
           chrom.Dist[Chrom==i][length(chrom.Dist[Chrom==i])] <- NA
         chrom.Dist <- chrom.Dist[-length(chrom.Dist)]
       }
@@ -1609,6 +1614,7 @@ collapseChain.RJaCGH <- function(obj) {
         newobj[[i]]$state.labels <- c(newobj[[i]]$state.labels,
                                    paste("Gain", 1:n.Gain, sep="-"))
       ## Should automatic labelling include the former steps?
+      ## changed 07-04-19. Need testing
       auto.label <- attr(obj[[1]], "auto.label")
       if (!is.null(auto.label)) {
         states <- states.RJaCGH(newobj, k=i)$states
@@ -1616,13 +1622,18 @@ collapseChain.RJaCGH <- function(obj) {
                                    k=i)$mu))
         freqs <- prop.table(table(states))
         labels <- names(freqs)
-        means <- obj.sum$mu
-        means.order <- order(abs(means))
-        tot.norm <- freqs['Normal']
+        means <- summary.RJaCGH(newobj, k=i)$mu
+        means.1 <- abs(means - max(means[names(means)=='Normal']))
+        means.2 <- abs(means - min(means[names(means)=='Normal']))
+        means <- pmin(means.1, means.2)
+        means.order <- order(means)
+        names(means.order) <- names(means)[order(means)]
+        means.order <- means.order[names(means.order) != 'Normal']
+        tot.norm <- sum(freqs[names(freqs)=='Normal'])
         ind.tot <- 1
         while(tot.norm < auto.label) {
-          labels[means.order][ind.tot+1] <- "Normal"
-          tot.norm <- tot.norm + freqs[means.order][ind.tot+1]
+          labels[means.order][ind.tot] <- "Normal"
+          tot.norm <- tot.norm + freqs[means.order][ind.tot]
           ind.tot <- ind.tot + 1
         }
         newobj[[i]]$state.labels <- labels
