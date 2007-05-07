@@ -7,7 +7,7 @@ Plot of the genome showing, with a color key, the marginal probability
 of every gene of alteration.
 }
 \usage{
-genome.plot(obj, col = NULL, breakpoints = NULL)
+genome.plot(obj, col = NULL, breakpoints = NULL, legend.pos=NULL,...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -17,6 +17,10 @@ genome.plot(obj, col = NULL, breakpoints = NULL)
   \item{breakpoints}{ A vector of length \texttt{k-1} for the
     breakpoints of the color key. The corresponding to losses must be
     negative. See example for details.}
+  \item{legend.pos}{Position of the legend. Must be a vector with two
+    elements; the position of the x and y coordinates. If \code{NULL},
+    the legend is placed at the right.}
+  \item{...}{Aditional parameters passed to plot.}
 }
 \details{
 If \code{col} and \code{breakpoints} are \code{NULL}, a default

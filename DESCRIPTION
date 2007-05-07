@@ -1,6 +1,6 @@
 Package: RJaCGH
-Version: 1.0.2
-Date: 2007-04-19
+Version: 1.1.1
+Date: 2007-05-07
 Title: Reversible Jump MCMC for the analysis of CGH arrays.
 Author: Oscar Rueda <omrueda@cnio,es> and Ramon Diaz-Uriarte <rdiaz@ligarto.org>
 Maintainer: Oscar Rueda <omrueda@cnio.es>
@@ -13,4 +13,4 @@ LazyLoad: Yes
 License: GPL version 2 or newer
 URL: http://www.r-project.org, http://adacgh.bioinfo.cnio.es,
 biocViews: Microarray, DNACopyNumber
-Packaged: Thu Apr 19 18:11:26 2007; omrueda
+Packaged: Mon May  7 16:38:44 2007; omrueda

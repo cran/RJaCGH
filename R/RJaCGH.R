@@ -181,7 +181,9 @@ plot.Q.NH <- function(x, beta, q=-beta, col=NULL,...) {
 }
 
 
-MetropolisSweep.C <- function(y, x, k.max, Chrom, model=NULL, burnin, TOT, prob.k, pb, ps, g, ka, mu.alfa,
+MetropolisSweep.C <- function(y, x, k.max, Chrom, model=NULL,
+                              normal.reference, normal.ref.percentile,
+                              burnin, TOT, prob.k, pb, ps, g, ka, mu.alfa,
                               mu.beta, sigma.tau.mu, sigma.tau.sigma.2,
                               sigma.tau.beta, tau.split.mu=NULL,
                               tau.split.beta=NULL, stat, start.k,
@@ -339,15 +341,16 @@ MetropolisSweep.C <- function(y, x, k.max, Chrom, model=NULL, burnin, TOT, prob.
   obj$k <- res$k[-c(1:(2*burnin+1))]
   obj$k <- factor(obj$k , levels=1:k.max)
   ## Relabel states
-  p.labels <- 0.95 ## should be a parameter??
+  ##  p.labels <- 0.95 ## should be a parameter??
+  ## it is now 2007-04-23
   for (i in 1:k.max) {
     if (table(obj$k)[i] > 0) {
       obj.sum <- summary.RJaCGH(obj, k=i, point.estimator="median")
       normal.levels <- (qnorm(mean=obj.sum$mu,
                               sd=sqrt(obj.sum$sigma.2),
-                              p=(1-p.labels)/2) < 0 &
+                              p=(1-normal.ref.percentile)/2) < normal.reference &
                         qnorm(mean=obj.sum$mu, sd=sqrt(obj.sum$sigma.2),
-                              p=1-(1-p.labels)/2) > 0)
+                              p=1-(1-normal.ref.percentile)/2) > normal.reference)
       ## bug fix to prevent a case
       ## in which normal.levels are
       ## ...TRUE FALSE TRUE...
@@ -361,7 +364,7 @@ MetropolisSweep.C <- function(y, x, k.max, Chrom, model=NULL, burnin, TOT, prob.
       n.Norm <- sum(normal.levels)
       if (n.Norm <=0) {
         normal.levels <- rep(FALSE, i)
-        normal.levels[which.min(abs(obj.sum$mu))] <- TRUE
+        normal.levels[which.min(abs(obj.sum$mu) - normal.reference)] <- TRUE
         n.Norm <- sum(normal.levels)
       }
       n.Loss <- which.max(normal.levels) -1
@@ -416,12 +419,18 @@ MetropolisSweep.C <- function(y, x, k.max, Chrom, model=NULL, burnin, TOT, prob.
   rm(res)
   gc()
   attr(obj, "auto.label") <- auto.label
+  attr(obj, "normal.reference") <- normal.reference
+  attr(obj, "normal.ref.percentile") <- normal.ref.percentile
+  
   obj
 
 }
 
 
-RJMCMC.NH.HMM.Metropolis <- function(y, Chrom=NULL, x=NULL, index=NULL, model=NULL, burnin=0, TOT=1000, k.max=6,
+RJMCMC.NH.HMM.Metropolis <- function(y, Chrom=NULL, x=NULL, index=NULL, model=NULL, max.dist=NULL,
+                                     normal.reference=0,
+                                     normal.ref.percentile=0.95,
+                                     burnin=0, TOT=1000, k.max=6,
                                      stat=NULL, mu.alfa=NULL, mu.beta=NULL, ka=ka, g=g, prob.k=NULL,
                                      sigma.tau.mu, sigma.tau.sigma.2, sigma.tau.beta,
                                      tau.split.mu, tau.split.beta,
@@ -442,6 +451,12 @@ RJMCMC.NH.HMM.Metropolis <- function(y, Chrom=NULL, x=NULL, index=NULL, model=NU
     x <- rep(0, length(y)-1) ## zz:??? a "rep"?
   }
   ## Scale x'2 to avoid overflow
+  if (!is.null(max.dist)) {
+    if (max.dist < max(x, na.rm=TRUE)) {
+      stop("max.dist must be greater than all distances between spots\n")
+    }
+    x <- x/max.dist
+  }
   else if(max(x, na.rm=TRUE)!=0){
     x <- x/max(x, na.rm=TRUE)
   }
@@ -473,8 +488,10 @@ RJMCMC.NH.HMM.Metropolis <- function(y, Chrom=NULL, x=NULL, index=NULL, model=NU
       stop("Length of vector of distances and data vector are different in get jump!")
 
   params <- get.jump(y=y, x=x, k.max=k.max, Chrom=Chrom, model=model,
-                           prob.k=prob.k, pb=pb, ps=ps, g=g, 
-                           ka=ka, mu.alfa=mu.alfa, mu.beta=mu.beta, stat=stat)
+                     normal.reference=normal.reference,
+                     normal.ref.percentile=normal.ref.percentile,
+                     prob.k=prob.k, pb=pb, ps=ps, g=g, 
+                     ka=ka, mu.alfa=mu.alfa, mu.beta=mu.beta, stat=stat)
   if (is.null(sigma.tau.mu)) sigma.tau.mu <- params$sigma.tau.mu
   if (is.null(sigma.tau.sigma.2)) sigma.tau.sigma.2 <- params$sigma.tau.sigma.2
   if (is.null(sigma.tau.beta)) sigma.tau.beta <- params$sigma.tau.beta
@@ -487,7 +504,10 @@ RJMCMC.NH.HMM.Metropolis <- function(y, Chrom=NULL, x=NULL, index=NULL, model=NU
       stop("Length of vector of distances and data vector are different in metropolis!")
   
   res <- MetropolisSweep.C(y=y, x=x, k.max=k.max, Chrom=Chrom,
-                           model=model, burnin=burnin, TOT=TOT,
+                           model=model,
+                           normal.reference=normal.reference,
+                           normal.ref.percentile=normal.ref.percentile,
+                           burnin=burnin, TOT=TOT,
                            prob.k=prob.k, pb=pb, ps=ps, g=g, 
                            ka=ka, mu.alfa=mu.alfa, mu.beta=mu.beta,
                            sigma.tau.mu=sigma.tau.mu,
@@ -502,7 +522,11 @@ RJMCMC.NH.HMM.Metropolis <- function(y, Chrom=NULL, x=NULL, index=NULL, model=NU
 
 
 
-RJaCGH.one.array <- function(y, Chrom=NULL, Pos=NULL, Dist=NULL, model="genome", burnin=0, TOT=1000, k.max=6,
+RJaCGH.one.array <- function(y, Chrom=NULL, Pos=NULL, Dist=NULL,
+                             model="genome",
+                             max.dist=NULL, normal.reference=0,
+                             normal.ref.percentile=0.95,
+                             burnin=0, TOT=1000, k.max=6,
                              stat=NULL, mu.alfa=NULL, mu.beta=NULL, ka, g, prob.k=NULL,
                              sigma.tau.mu, sigma.tau.sigma.2, sigma.tau.beta,
                              tau.split.mu, tau.split.beta,
@@ -536,7 +560,12 @@ RJaCGH.one.array <- function(y, Chrom=NULL, Pos=NULL, Dist=NULL, model="genome",
     }
     if (!is.null(Dist)) chrom.Dist <- Dist
 
-    res <- RJMCMC.NH.HMM.Metropolis(y=y, Chrom=rep(1, length(y)), x=chrom.Dist, burnin=burnin,
+    res <- RJMCMC.NH.HMM.Metropolis(y=y, Chrom=rep(1, length(y)),
+                                    x=chrom.Dist,
+                                    max.dist=max.dist,
+                                    normal.reference=normal.reference,
+                                    normal.ref.percentile=normal.ref.percentile,
+                                    burnin=burnin,
                                     TOT=TOT, k.max=k.max, stat=stat, mu.alfa=mu.alfa, mu.beta=mu.beta,
                                     ka=ka, g=g, prob.k=prob.k, sigma.tau.mu=sigma.tau.mu,
                                     sigma.tau.sigma.2=sigma.tau.sigma.2,
@@ -579,7 +608,12 @@ RJaCGH.one.array <- function(y, Chrom=NULL, Pos=NULL, Dist=NULL, model="genome",
         }
         cat("Chromosome", i, "\n")
         res[[i]] <-
-          RJMCMC.NH.HMM.Metropolis(y=y[Chrom==i], Chrom=Chrom[Chrom==i], x=chrom.Dist, burnin=burnin,
+          RJMCMC.NH.HMM.Metropolis(y=y[Chrom==i],
+        Chrom=Chrom[Chrom==i], x=chrom.Dist,
+                                   max.dist=max.dist,
+                                   normal.reference=normal.reference,
+                                   normal.ref.percentile=normal.ref.percentile,
+                                   burnin=burnin,
                                    TOT=TOT, k.max=k.max, stat=stat, mu.alfa=mu.alfa, mu.beta=mu.beta,
                                    ka=ka, g=g, prob.k=prob.k, sigma.tau.mu=sigma.tau.mu,
                                    sigma.tau.sigma.2=sigma.tau.sigma.2,
@@ -618,7 +652,11 @@ RJaCGH.one.array <- function(y, Chrom=NULL, Pos=NULL, Dist=NULL, model="genome",
       }
       if (!is.null(Dist)) chrom.Dist <- Dist
       ## We'll have to take out the last Dist of every Chrom
-      res <- RJMCMC.NH.HMM.Metropolis(y=y, Chrom=Chrom, x=chrom.Dist, burnin=burnin, TOT=TOT,
+      res <- RJMCMC.NH.HMM.Metropolis(y=y, Chrom=Chrom, x=chrom.Dist,
+                                      max.dist=max.dist,
+                                      normal.reference=normal.reference,
+                                      normal.ref.percentile=normal.ref.percentile,
+                                      burnin=burnin, TOT=TOT,
                                       k.max=k.max, stat=stat, mu.alfa=mu.alfa, mu.beta=mu.beta,
                                       ka=ka, g=g, prob.k=prob.k, sigma.tau.mu=sigma.tau.mu,
                                       sigma.tau.sigma.2=sigma.tau.sigma.2,
@@ -637,10 +675,14 @@ RJaCGH.one.array <- function(y, Chrom=NULL, Pos=NULL, Dist=NULL, model="genome",
   res
 }
 
-RJaCGH <- function(y, Chrom=NULL, Pos=NULL, Dist=NULL, model="genome", burnin=10000, TOT=10000, k.max=6,
-                  stat=NULL, mu.alfa=NULL, mu.beta=NULL, ka=NULL,
+RJaCGH <- function(y, Chrom=NULL, Pos=NULL, Dist=NULL, model="genome",
+                   max.dist=NULL,
+                   normal.reference=0, normal.ref.percentile=0.95,
+                   burnin=10000, TOT=10000, k.max=6,
+                   stat=NULL, mu.alfa=NULL, mu.beta=NULL, ka=NULL,
                    g=NULL, prob.k=NULL, jump.parameters=list(),
                    start.k=NULL, RJ=TRUE, auto.label=0.60) {
+  
   sigma.tau.mu <- jump.parameters$sigma.tau.mu
   sigma.tau.sigma.2 <- jump.parameters$sigma.tau.sigma.2
   sigma.tau.beta <- jump.parameters$sigma.tau.beta
@@ -648,7 +690,12 @@ RJaCGH <- function(y, Chrom=NULL, Pos=NULL, Dist=NULL, model="genome", burnin=10
   tau.split.beta <- jump.parameters$tau.split.beta
   ## Check if we have 1 array or several
   if(is.null(dim(y))) {
-    res <- RJaCGH.one.array(y, Chrom=Chrom, Pos=Pos, Dist=Dist, model=model, burnin=burnin, TOT=TOT, k.max=k.max,
+    res <- RJaCGH.one.array(y, Chrom=Chrom, Pos=Pos, Dist=Dist,
+                            model=model,
+                            max.dist=max.dist,
+                            normal.reference=normal.reference,
+                            normal.ref.percentile=normal.ref.percentile,
+                            burnin=burnin, TOT=TOT, k.max=k.max,
                             stat=stat, mu.alfa=mu.alfa, mu.beta=mu.beta,
                             ka=ka, g=g, prob.k=prob.k,
                             sigma.tau.mu=sigma.tau.mu, sigma.tau.sigma.2=sigma.tau.sigma.2,
@@ -664,7 +711,11 @@ RJaCGH <- function(y, Chrom=NULL, Pos=NULL, Dist=NULL, model="genome", burnin=10
       cat("array", colnames(y)[i], "\n")
       res[[colnames(y)[i]]] <-
         RJaCGH.one.array(y[,i], Chrom=Chrom,
-                         Pos=Pos, Dist=Dist, model=model, burnin=burnin, TOT=TOT, k.max=k.max,
+                         Pos=Pos, Dist=Dist, model=model,
+                         max.dist=max.dist,
+                         normal.reference=normal.reference,
+                         normal.ref.percentile=normal.ref.percentile,
+                         burnin=burnin, TOT=TOT, k.max=k.max,
                          stat=stat, mu.alfa=mu.alfa, mu.beta=mu.beta, ka=ka, g=g, prob.k=prob.k,
                          sigma.tau.mu=sigma.tau.mu, sigma.tau.sigma.2=sigma.tau.sigma.2, sigma.tau.beta=sigma.tau.beta,
                          tau.split.mu=tau.split.mu,
@@ -1795,7 +1846,8 @@ chainsSelect.RJaCGH.array <- function(obj, nutrim = 4, trim = NULL) {
 
 ##############################
 ## Adapt parameters intra model
-get.jump <- function(y, x, Chrom, model, k.max=6,
+get.jump <- function(y, x, Chrom, model, k.max=6, normal.reference,
+                     normal.ref.percentile,
                      prob.k=NULL, pb=NULL, ps=NULL, g=NULL, 
                      ka=NULL, mu.alfa=NULL, mu.beta=NULL, stat)
  {
@@ -1831,7 +1883,9 @@ get.jump <- function(y, x, Chrom, model, k.max=6,
     ## Check if min == max
   while ((!p.mu | !p.sigma.2 | !p.beta) & tries < 5) {
     fit <- MetropolisSweep.C(y=y, x=x, k.max=k.max, Chrom=Chrom,
-                           model=model, burnin=0, TOT=1000,
+                             model=model, burnin=0, TOT=1000,
+                             normal.reference=normal.reference,
+                             normal.ref.percentile=normal.ref.percentile,
                            prob.k=prob.k, pb=pb, ps=ps, g=g,
                            ka=ka, mu.alfa=mu.alfa, mu.beta=mu.beta,
                            sigma.tau.mu=rep(sigma.tau.mu,k.max),
@@ -2608,7 +2662,7 @@ print.pMCR.RJaCGH.array.genome <- function(x,...) {
   }
 }
 
-genome.plot <- function(obj, col=NULL, breakpoints=NULL) {
+genome.plot <- function(obj, col=NULL, breakpoints=NULL, legend.pos=NULL,...) {
   if (!is.null(col) & !is.null(breakpoints)) {
     if(length(col) != length(breakpoints) + 1)
       stop("length(col) must be length(breakpoints + 1\n")
@@ -2617,41 +2671,51 @@ genome.plot <- function(obj, col=NULL, breakpoints=NULL) {
    }
 
   if(inherits(obj, "RJaCGH.array")) {
-    Chrom <- obj[[obj$array.name[1]]]$Chrom
-    Pos <- obj[[obj$array.name[1]]]$Pos
-    if (!is.null(obj[[obj$array.name[1]]]$Pos.rel))
-      Pos <- obj[[obj$array.name[1]]]$Pos.rel
-
+    Chrom <- obj[[obj$array.names[1]]]$Chrom
+    Pos <- obj[[obj$array.names[1]]]$Pos
+    if (!is.null(obj[[obj$array.names[1]]]$Pos.rel)) {
+      Pos <- obj[[obj$array.names[1]]]$Pos.rel
+    }
     probs <- model.averaging(obj)
-    probs <- lapply(probs, function(x) lapply(x, function(y) y$prob.states))
-    probs <- lapply(probs, function(x) do.call("rbind", x))
+    if(inherits(obj[[obj$array.names[1]]], "RJaCGH.Chrom")) {
+      probs <- lapply(probs, function(x) lapply(x, function(y) y$prob.states))
+      probs <- lapply(probs, function(x) do.call("rbind", x))
+    }
+    else {
+      probs <- lapply(probs, function(y) y$prob.states)
+    }
+
     average <- matrix(0, nrow=nrow(probs[[1]]), ncol=3)
     y.mean <- rep(0, nrow(probs[[1]]))
-    y <- lapply(obj, function(x) lapply(x, function(y) y$y))
-    y <- lapply(y, function(x) do.call("c", x))
+    if(inherits(obj[[obj$array.names[[1]]]], "RJaCGH.Chrom")) {
+      y <- lapply(obj, function(x) lapply(x, function(y) y$y))
+      y <- lapply(y, function(x) do.call("c", x))
+    }
+    else {
+      y <- lapply(obj, function(x) x$y)
+    }
     y$array.names <- NULL
+
     for (i in 1:length(probs)) {
       average <- average + probs[[i]]
       y.mean <- y.mean + y[[i]]
     }
     average <- average / length(probs)
     y.mean <- y.mean / length(probs)
-    y <- y.average
+    y <- y.mean
     probs <- average
   }
-  
   if(inherits(obj, "RJaCGH.genome") | inherits(obj, "RJaCGH.Chrom")) {
     Chrom <- obj$Chrom
     Pos <- obj$Pos
-    if (!is.null(obj$Pos.rel))
+    if (!is.null(obj$Pos.rel)) {
       Pos <- obj$Pos.rel
+    }
     if(inherits(obj, "RJaCGH.Chrom") & !is.null(obj[[1]]$Pos.rel)) {
       Pos <- numeric(0)
       for(chr in unique(obj$Chrom))
         Pos <- c(Pos, obj[[chr]]$Pos.rel)
     }
-                    
-    
     probs <- model.averaging(obj)
     y <- obj$y
     if (inherits(obj, "RJaCGH.Chrom")) {
@@ -2662,12 +2726,15 @@ genome.plot <- function(obj, col=NULL, breakpoints=NULL) {
         y <- c(y, obj[[chr]]$y)
       }
     }
-    else probs <- probs$prob.states
-    index <- 1*(y<0) + 3*(y>=0)
-    colo <- rep(0, length(index))
-    for(i in 1:length(index)) {
-      colo[i] <- probs[i,index[i]]
+    else {
+      probs <- probs$prob.states
     }
+  }
+  index <- 1*(y<0) + 3*(y>=0)
+
+  colo <- rep(0, length(index))
+  for(i in 1:length(index)) {
+    colo[i] <- probs[i,index[i]]
   }
   colo[index==1] <- -colo[index==1]
   colo.round <- floor(colo*10) / 10
@@ -2675,7 +2742,7 @@ genome.plot <- function(obj, col=NULL, breakpoints=NULL) {
   
     if (is.null(col)) {
     col <- colors()
-    col <- col[c(51, 50, 86, 24, 404, 552, 555)]
+    col <- col[c(86, 50, 51, 24, 555, 552, 404)]
   }
   if(is.null(breakpoints)) {
     breakpoints <- c(-0.9, -0.7, -0.5, 0.5, 0.7, 0.9)
@@ -2687,8 +2754,8 @@ genome.plot <- function(obj, col=NULL, breakpoints=NULL) {
     for (i in 2:MidPoint) {
       colo.recoded[colo.round > breakpoints[i-1] & colo.round <=
     breakpoints[i]] <- col[i]
-      label.legend <- c(label.legend, paste(breakpoints[i],
-                                            " > P.Loss >= ", -breakpoints[i-1], sep=""))
+      label.legend <- c(label.legend, paste(-breakpoints[i],
+                                            " < P.Loss <= ", -breakpoints[i-1], sep=""))
     }
   }
   colo.recoded[colo.round > breakpoints[MidPoint] & colo.round <
@@ -2699,7 +2766,7 @@ genome.plot <- function(obj, col=NULL, breakpoints=NULL) {
   if (length(breakpoints) > 2) {
     for (i in (MidPoint+2):length(breakpoints)) {
       colo.recoded[colo.round >=breakpoints[i-1] & colo.round
-    < breakpoints[i]] <- col[i+1]
+    < breakpoints[i]] <- col[i]
       label.legend <- c(label.legend, paste(breakpoints[i],
                                             " > P.Gain >= ", breakpoints[i-1], sep=""))
     }
@@ -2710,30 +2777,39 @@ genome.plot <- function(obj, col=NULL, breakpoints=NULL) {
   label.legend <- c(label.legend, paste("P.Gain >= ",
                                         breakpoints[length(breakpoints)], sep=""))
   n.chrom <- length(unique(Chrom))
-  
-  par(omi=c(0,0,0,0))
+  par(oma=c(0,0,2,0))
   par(mfrow=c(1, 2))
   xmax <- max(Pos)
   plot(0,0, type="n", xlim=c(0, xmax), ylim=c(1, ceiling(n.chrom/2)),
-       axes=FALSE, ylab="Chromosome", xlab="")
+       axes=FALSE, ylab="Chromosome", xlab="",...)
   axis(side=2, at=c(1:ceiling(n.chrom/2)), labels=unique(Chrom)[1:ceiling(n.chrom/2)])
 
-  for(i in 1:ceiling(n.chrom/2)) {
+  chrom.count <- 1
 
-    lines(c(0, max(Pos[Chrom==i])), c(i,i))
-    points(Pos[Chrom==i], i + y[Chrom==i]/ (2*max(abs(y))),
+  for(i in unique(Chrom)[1:ceiling(n.chrom/2)]) {
+    lines(c(0, max(Pos[Chrom==i])), c(chrom.count,chrom.count))
+    points(Pos[Chrom==i], chrom.count + y[Chrom==i]/ (2*max(abs(y))),
            pch=19,col=colo.recoded[Chrom==i], cex=0.5)
+    chrom.count <- chrom.count + 1
   }
   plot(0,0, type="n", xlim=c(0, xmax), ylim=c(1, ceiling(n.chrom/2)),
        axes=FALSE, ylab="Chromosome", xlab="")
   axis(side=2, at=1:(n.chrom - ceiling(n.chrom/2)), labels=unique(Chrom)[(ceiling(n.chrom/2)+1):n.chrom])
 
-  for(i in (ceiling(n.chrom/2) +1):n.chrom) {
-    lines(c(0, max(Pos[Chrom==i])), c(i-12,i-12))
-    points(Pos[Chrom==i], i -ceiling(n.chrom/2) + y[Chrom==i]/ (2*max(abs(y))),
+  chrom.count <- 1
+  for(i in unique(Chrom)[(ceiling(n.chrom/2) +1):n.chrom]) {
+
+    lines(c(0, max(Pos[Chrom==i])), c(chrom.count,chrom.count))
+    points(Pos[Chrom==i], chrom.count  + y[Chrom==i]/ (2*max(abs(y))),
            pch=16,col=colo.recoded[Chrom==i], cex=0.5)
+    chrom.count <- chrom.count + 1
   }
-  legend(max(Pos[Chrom==(floor(n.chrom/2)+3)]), 8, legend=label.legend,
-         col=col, pch=19)
-  
+  if(is.null(legend.pos)) {
+    legend("right", legend=label.legend,
+           col=col, pch=19)
+  }
+  else {
+    legend(x=legend.pos[1], y=legend.pos[2], legend=label.legend,
+           col=col, pch=19)
+  }
 }

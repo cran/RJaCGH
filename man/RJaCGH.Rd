@@ -7,8 +7,10 @@ This function fits a non-homogeneous hidden Markov model to CGH data
 through bayesian methods and Reversible Jump Markov chain Montecarlo.
 }
 \usage{
-RJaCGH(y, Chrom = NULL, Pos = NULL, Dist=NULL, model = "genome", burnin = 10000, TOT =
-10000, k.max = 6, stat = NULL, mu.alfa = NULL, mu.beta = NULL, ka = NULL,
+RJaCGH(y, Chrom = NULL, Pos = NULL, Dist=NULL, model = "genome",
+max.dist=NULL, normal.reference=0, normal.ref.percentile=0.95,
+burnin = 10000, TOT =10000, k.max = 6, stat = NULL, mu.alfa = NULL,
+mu.beta = NULL, ka = NULL,
 g = NULL, prob.k = NULL, jump.parameters=list(), start.k = NULL,
 RJ=TRUE, auto.label=0.60)
 }
@@ -19,13 +21,22 @@ RJ=TRUE, auto.label=0.60)
   \item{Pos}{Vector with Positions of every gene. They can be absolute
     to the genome or relative to the chromosome. They should be ordered
     within every chromosome. This is, the arrays must be ordered by their
-  positions in the genome. They must be integers.}
+    positions in the genome. They must be integers.}
   \item{Dist}{Optional vector of distances between genes. It should be a vector
     of length \code{length(y)-1}. Note that when \code{Chrom} is not NULL,
     every last value of every Chromosome is not used.}
   \item{model}{if \code{model}="genome", the same model is fitted for
     the whole genome. If \code{model}="Chrom", a different model is
     fitted for each chromosome.}
+  \item{max.dist}{maximal distance between spots. When two spots have
+    a distance between them as far or further than \code{max.dist}, they
+    are considered independent. That is, the state of that spot
+    does not affect the state of the other. If \code{NULL} (the default) the
+    maximum \code{Dist} or maximum diference in \code{Pos} is taken.}
+  \item{normal.reference}{The value considered as the mean of the normal
+    state. See details. By default is \code{0}.}
+  \item{normal.ref.percentile}{Percentage for the relabelling of
+    states. See details. by default is 0.95.}
   \item{burnin}{Number of burn-in iterations in the Markov Chain}
   \item{TOT}{Number of iterations after the burn-in}
   \item{k.max}{Maximum number of hidden states to fit.}
@@ -104,15 +115,16 @@ RJ=TRUE, auto.label=0.60)
   length 1. If any of them is NULL, a call to the internal function
   \code{get.jump()} is made to find 'good' values.
 
-  A relabelling of hidden states is performed to label biological
-  states. The states whom have zero value inside a 95\% confidence
+  A relabelling of hidden states is performed to match biological
+  states. The states whom have the \code{normal.reference} value
+  inside a \code{normal.ref.percentile}\% confidence
   based on a normal distribution with means the median of \code{mu}
-  and sd the median of the square root fo \code{sigma.2} are labelled as
+  and sd the square root of the median of \code{sigma.2} are labelled as
   'Normal'. If no state is labelled as 'Normal', the closest state to
-  zero is chosen.
+  \code{normal.reference} is chosen.
   If \code{auto.label} is not null, closest states to 'Normal' are also
   labelled as 'Normal' until a proportion of \code{auto.label} is
-  reached. Please note taht the default value is 0.60, so at least the
+  reached. Please note that the default value is 0.60, so at least the
   60\% of the observations will be labelled as 'Normal'.
   
     
@@ -168,8 +180,6 @@ RJ=TRUE, auto.label=0.60)
   \item{state.labels}{Labels of the biological states.}
   \item{prob.states}{Marginal posterior probabilities of belonging to
     every hidden state.}
-  \item{prob.joint.states}{Joint posterior probabilities for every pair
-  of adjacent genes of both Gains, Normal or Losses.}
 }
 \references{
   Oscar M. Rueda and Ramon Diaz Uriarte. A flexible, accurate and

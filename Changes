@@ -1,5 +1,10 @@
+1.1.1: Bug in get jump.
+1.1.0: New args to RJaCGH added: max.distance, normal.reference and 
+       normal.ref.percentile
 1.0.2: Bug Fixing:
        when model=genome there had to be 23 chromosomes
+       strange bug with auto.label
+       (Thanks to Al Ivens)
 1.0,1: Bug fixing: 
        labels in legend of genome.plot
        plot.RJaCGH.array with an even number of chromosomes
