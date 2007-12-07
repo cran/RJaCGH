@@ -42,20 +42,20 @@ gelman.brooks.plot(obj, bin = 1000, array = NULL, Chrom = NULL, k = NULL)
   The third and the four show the R values for variances and betas of
   the most visited model.
   Besides, a list is returned with components
-  \item{k}{R values for the numebr of states}
+  \item{k}{R values for the number of states}
   \item{mu}{R values for the means of the states}
-  \item{mu}{R values for the variances of the states}
-  \item{mu}{R values for the beta parameters}
+  \item{sigma.2}{R values for the variances of the states}
+  \item{beta}{R values for the beta parameters}
 }
 \references{Brooks, S.P. and Gelman, A. (1998). General Methods for
   Monitoring convergence of iterative simulations. Journal of
   Computational and Graphical Statistics. p434-455.
 
   
-  Oscar M. Rueda and Ramon Diaz Uriarte. A flexible, accurate and
-  extensible statistical method for detecting genomic copy-number
-  changes. \url{http://biostats.bepress.com/cobra/ps/art9/}.
-  {http://biostats.bepress.com/cobra/ps/art9/}.
+  Rueda OM, Diaz-Uriarte R.
+  Flexible and Accurate Detection of Genomic Copy-Number Changes from
+  aCGH.
+  PLoS Comput Biol. 2007;3(6):e122
 }  
 \author{Oscar M. Rueda and Ramon Diaz Uriarte}
 

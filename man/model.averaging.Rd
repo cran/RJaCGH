@@ -38,10 +38,11 @@ model.averaging(obj)
 %     to each pair of states for every observation.}
 
 }
-\references{  Oscar M. Rueda and Ramon Diaz Uriarte. A flexible, accurate and
-  extensible statistical method for detecting genomic copy-number
-  changes. \url{http://biostats.bepress.com/cobra/ps/art9/}.
-  {http://biostats.bepress.com/cobra/ps/art9/}.
+\references{
+    Rueda OM, Diaz-Uriarte R.
+  Flexible and Accurate Detection of Genomic Copy-Number Changes from
+  aCGH.
+  PLoS Comput Biol. 2007;3(6):e122
 }
 \author{Oscar M. Rueda and Ramon Diaz Uriarte}
 

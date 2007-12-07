@@ -9,10 +9,14 @@
 A plot is drawed with information from the fit of a RJaCGH object.
 }
 \usage{
-plot.RJaCGH(x, k = NULL, model.averaging = TRUE, cex=1, ...)
-\method{plot}{RJaCGH.Chrom}(x, Chrom="genome", model.averaging=TRUE, cex=1, k=NULL,...)
-\method{plot}{RJaCGH.genome}(x, k=NULL, model.averaging=TRUE, cex=1,...)
-\method{plot}{RJaCGH.array}(x, method="averaging", weights=NULL, cex=1, ...)
+\method{plot}{RJaCGH}(x, k = NULL, model.averaging = TRUE, cex=1,
+smoother=FALSE, \ldots)
+\method{plot}{RJaCGH.Chrom}(x, Chrom="genome", model.averaging=TRUE,
+cex=1, k=NULL, smoother=FALSE, \ldots)
+\method{plot}{RJaCGH.genome}(x, k=NULL, model.averaging=TRUE, cex=1,
+smoother=FALSE, \ldots)
+\method{plot}{RJaCGH.array}(x, show="frequency", weights=NULL, cex=1,
+smoother=FALSE, \ldots)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -27,9 +31,10 @@ plot.RJaCGH(x, k = NULL, model.averaging = TRUE, cex=1, ...)
   \item{Chrom}{For RJaCGH.chrom objects. If "genome", a whole plot of
     the genome is shown. If a chromosome number, olnly the model
     corresponding to that chromosome. See details.}
-  \item{method}{one of "averaging" or "other"}
+  \item{show}{one of "average" or "frequency"}
   \item{weights}{vector of weights for each array. Must have the length
     of the number of arrays. If NULL, the weights are uniform.}
+  \item{smoother}{Logical. Smoothed means by model averaging.}
   \item{...}{additional arguments passed to plot.}
 }
 \details{
@@ -52,22 +57,30 @@ plot.RJaCGH(x, k = NULL, model.averaging = TRUE, cex=1, ...)
   If the object is 'RJaCGH.Chrom', only the last one of the plots are
   shown. For the complete panel, call the method on every chromosome.
 
-  If the object is 'RJaCGH.array' and method is 'averaging', the last
+  If the object is 'RJaCGH.array' and \code{show} is 'average', the last
   one of the plots is drawn, but the hidden state sequence and its
   probability is computed averaging on all the arrays with weights
-  according to \code{weights} vector. If method is 'other', again the
-  last plot is drawn, but the percentage of arrays in which every gene
-  is Gain/Lost is shown, weighted by the \code{weights} vector.
+  according to \code{weights} vector. If \code{show} is 'frequency',
+  again the  last plot is drawn, but the percentage of arrays in
+  which every gene  is Gain/Lost is shown, weighted by the
+  \code{weights} vector.
+
+  If \code{smoother} is TRUE, the smoothed mean is drawn. See
+  \code{\link{smoothMeans}} (except in \code{plot.RJaCGH.array} when
+  method is not 'averaging').
 }
 \value{
   A plot.
 }
-\references{Oscar M. Rueda and Ramon Diaz Uriarte,
-  \url{http://biostats.bepress.com/cobra/ps/art9/}
-  {http://biostats.bepress.com/cobra/ps/art9/}
+\references{
+    Rueda OM, Diaz-Uriarte R.
+  Flexible and Accurate Detection of Genomic Copy-Number Changes from
+  aCGH.
+  PLoS Comput Biol. 2007;3(6):e122
 }
 \author{Oscar M. Rueda and Ramon Diaz Uriarte}
- \seealso{\code{\link{RJaCGH}},
+\seealso{\code{\link{RJaCGH}},
+  \code{\link{smoothMeans}},
   \code{\link{summary.RJaCGH}}, \code{\link{model.averaging}},
   \code{\link{states}}, \code{\link{trace.plot}},
   \code{\link{gelman.brooks.plot}}, \code{\link{collapseChain}}}

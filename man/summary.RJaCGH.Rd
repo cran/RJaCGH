@@ -10,10 +10,15 @@
 'RJaCGH.genome' and 'RJaCGH.array'.
 }
 \usage{
-summary.RJaCGH(object, k = NULL, point.estimator = "median", ...)
-\method{summary}{RJaCGH.Chrom}(object, point.estimator="median", ...)
-\method{summary}{RJaCGH.genome}(object, k=NULL, point.estimator="median", ...)
-\method{summary}{RJaCGH.array}(object, point.estimator="median", ...)
+\method{summary}{RJaCGH}(object, k = NULL, point.estimator = "median",
+quantiles=NULL, \ldots)
+\method{summary}{RJaCGH.Chrom}(object, point.estimator="median",
+Chrom=NULL,quantiles=NULL,  \ldots)
+\method{summary}{RJaCGH.genome}(object, k=NULL,
+point.estimator="median",
+quantiles=NULL, \ldots)
+\method{summary}{RJaCGH.array}(object, point.estimator="median",
+quantiles=NULL, \ldots)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -23,6 +28,11 @@ summary.RJaCGH(object, k = NULL, point.estimator = "median", ...)
   \item{point.estimator}{Type of point estimator for \code{mu},
     \code{sigma.2} and \code{beta}. It can be "mean", "median" or
     "mode".}
+  \item{Chrom}{If \code{object} has a different model for every
+    chromosome, this argument is the chromosome to get summaries from.
+    If NULL, all chromosomes will be summarized.}
+  \item{quantiles}{A vector of probabilities for the quantiles of the
+    posterior distribution of means and variances.}
   \item{...}{Additional arguments passed to summary.}
 }
 \details{
@@ -32,16 +42,17 @@ The point estimator "mode" is simply the max value obtained in a kernel
 density estimation through the function \code{\link{density}}
 }
 \value{
-  \item{y}{y values}
-  \item{x}{x values (distances between genes)}
-  \item{mu}{Point estimator of \code{mu}}
-  \item{sigma.2}{Point estimator of \code{sigma.2}}
+  \item{k}{Frequencies of the hidden states visited by the sampler.}
+  \item{mu}{Quantiles of the posterior distribution of \code{mu}}
+  \item{sigma.2}{Quantiles of the posterior distribution of \code{sigma.2}}
   \item{beta}{Point estimator of \code{beta}}
+  \item{stat}{Initial distribution of the hidden states.}
 }
-\references{  Oscar M. Rueda and Ramon Diaz Uriarte. A flexible, accurate and
-  extensible statistical method for detecting genomic copy-number
-  changes. \url{http://biostats.bepress.com/cobra/ps/art9/}.
-  {http://biostats.bepress.com/cobra/ps/art9/}.
+\references{
+  Rueda OM, Diaz-Uriarte R.
+  Flexible and Accurate Detection of Genomic Copy-Number Changes from
+  aCGH.
+  PLoS Comput Biol. 2007;3(6):e122
 }
 \author{Oscar M. Rueda and Ramon Diaz Uriarte}
 

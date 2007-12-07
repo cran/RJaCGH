@@ -11,10 +11,10 @@ Methods for estimating the hidden state sequence of a RJaCGH model.
 }
 \usage{
 states(obj, k)
-states.RJaCGH(obj, k=NULL)
-states.RJaCGH.Chrom(obj, k=NULL)
-states.RJaCGH.genome(obj, k=NULL)
-states.RJaCGH.array(obj, k=NULL)
+\method{states}{RJaCGH}(obj, k=NULL)
+\method{states}{RJaCGH.Chrom}(obj, k=NULL)
+\method{states}{RJaCGH.genome}(obj, k=NULL)
+\method{states}{RJaCGH.array}(obj, k=NULL)
 
 }
 %- maybe also 'usage' for other objects documented here.
@@ -41,13 +41,12 @@ sublists, as in \code{\link{RJaCGH}}.
   \item{states}{Factor with the hidden state sequence}
   \item{prob.states}{Matrix with the probabilities associated to every
     states for every observation.}
-%   \item{prob.joint.states}{Matrix with the joint probabilities
-%     associated to each pair of states for every observation.}
 }
-\references{  Oscar M. Rueda and Ramon Diaz Uriarte. A flexible, accurate and
-  extensible statistical method for detecting genomic copy-number
-  changes. \url{http://biostats.bepress.com/cobra/ps/art9/}
-  {http://biostats.bepress.com/cobra/ps/art9/}
+\references{
+    Rueda OM, Diaz-Uriarte R.
+  Flexible and Accurate Detection of Genomic Copy-Number Changes from
+  aCGH.
+  PLoS Comput Biol. 2007;3(6):e122
 }
 
   \author{Oscar M. Rueda and Ramon Diaz Uriarte}

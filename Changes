@@ -1,3 +1,13 @@
+1.2.0: Homocedastic model in RJaCGH
+       Change in priors: uniform priors for sigma     
+       pREC_A and pREC_S
+       Arbitrary names and number of Chromosomes
+       Probe names
+       Start/End positions
+       New get.jump()
+       New summary
+       Bug in labellling of states
+       New vignette
 1.1.1: Bug in get jump.
 1.1.0: New args to RJaCGH added: max.distance, normal.reference and 
        normal.ref.percentile

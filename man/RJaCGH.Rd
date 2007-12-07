@@ -7,32 +7,41 @@ This function fits a non-homogeneous hidden Markov model to CGH data
 through bayesian methods and Reversible Jump Markov chain Montecarlo.
 }
 \usage{
-RJaCGH(y, Chrom = NULL, Pos = NULL, Dist=NULL, model = "genome",
+RJaCGH(y, Chrom = NULL, Start=NULL, End=NULL, Pos = NULL,
+Dist=NULL, probe.names=NULL, maxVar=NULL, model = "genome", var.equal=TRUE, 
 max.dist=NULL, normal.reference=0, normal.ref.percentile=0.95,
 burnin = 10000, TOT =10000, k.max = 6, stat = NULL, mu.alfa = NULL,
-mu.beta = NULL, ka = NULL,
-g = NULL, prob.k = NULL, jump.parameters=list(), start.k = NULL,
-RJ=TRUE, auto.label=0.60)
+mu.beta = NULL, prob.k = NULL, jump.parameters=list(),
+start.k = NULL, RJ=TRUE, auto.label=NULL)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{y}{Vector with Log Ratio observations.}
-  \item{Chrom}{Vector with Chromosome indicator. Must be numeric (1 to 23)}
+  \item{Chrom}{Vector with Chromosome indicator.}
+  \item{Start}{Vector with start positions of the probes.}
+  \item{End}{Vector with end positions of the probes.}
   \item{Pos}{Vector with Positions of every gene. They can be absolute
     to the genome or relative to the chromosome. They should be ordered
     within every chromosome. This is, the arrays must be ordered by their
-    positions in the genome. They must be integers.}
+    positions in the genome. They must be integers. Positions can be
+    specified with \code{Start}, \code{End} or \code{Pos}, but only in
+    one of the two ways.}
   \item{Dist}{Optional vector of distances between genes. It should be a vector
     of length \code{length(y)-1}. Note that when \code{Chrom} is not NULL,
     every last value of every Chromosome is not used.}
+  \item{probe.names}{Character vector with the number of the probes.}
+  \item{maxVar}{Maximum value for the variance of the states. If
+    \code{NULL}, the range of the data is chosen.}
   \item{model}{if \code{model}="genome", the same model is fitted for
     the whole genome. If \code{model}="Chrom", a different model is
     fitted for each chromosome.}
+  \item{var.equal}{Logical. If \code{TRUE} the variances of the hidden
+    states are restricted to be the same.}
   \item{max.dist}{maximal distance between spots. When two spots have
     a distance between them as far or further than \code{max.dist}, they
     are considered independent. That is, the state of that spot
     does not affect the state of the other. If \code{NULL} (the default) the
-    maximum \code{Dist} or maximum diference in \code{Pos} is taken.}
+    maximum \code{Dist} or maximum difference in \code{Pos} is taken.}
   \item{normal.reference}{The value considered as the mean of the normal
     state. See details. By default is \code{0}.}
   \item{normal.ref.percentile}{Percentage for the relabelling of
@@ -41,38 +50,37 @@ RJ=TRUE, auto.label=0.60)
   \item{TOT}{Number of iterations after the burn-in}
   \item{k.max}{Maximum number of hidden states to fit.}
   \item{stat}{Initial Distribution for the hidden states. Must be a
-    vector of size 1 + 2 + ... +\code{k.max}. If NULL, it is assumed a
+    vector of size 1 + 2 + ... +\code{k.max}. If \code{NULL}, it is assumed a
     uniform distribution for every model.}
   \item{mu.alfa}{Hyperparameter. See details}
   \item{mu.beta}{Hyperparameter. See details}
-  \item{ka}{Hyperparameter. See details}
-  \item{g}{Hyperparameter. See details}
   \item{prob.k}{Hyperparameter. See details}
   \item{jump.parameters}{List with the parameters for the MCMC
     jumps. See details.}
-  \item{start.k}{Initial number of states. if NULL, a random draw from
+  \item{start.k}{Initial number of states. if \code{NULL}, a random draw from
     \code{prob.k} is chosen.}
-  \item{RJ}{Logical. If TRUE, Reversible Jump is performed. If not, MCMC
-    over a fixed number of hidden states.}
-  \item{auto.label}{If not NULL, should be the minimum proportion of
+  \item{RJ}{Logical. If \code{TRUE}, Reversible Jump is performed.
+    If not, MCMC
+    over a fixed number of hidden states. Note that if \code{NULL}, most
+  of the methods for extracting information won't work.}
+  \item{auto.label}{If not \code{NULL}, should be the minimum proportion of
   observations labeled as 'Normal'. See details.}
 }
 \details{
   RJaCGH fits the following bayesian model: There is a priori
   distribution for the number of hidden states (different copy numbers)
-  as stated by \code{prob.k}. If NULL, a uniform distribution between 1
+  as stated by \code{prob.k}. If \code{NULL}, a uniform distribution between 1
   and \code{k.max} is used.
 
   
-  The hidden states follow a normal distribution which mean (\code{mu}) follows
+  The hidden states follow a normal distribution which mean (\code{mu})
+  follows
   itself a normal distribution with mean
-  \code{mu.alfa} and stdev \code{mu.beta}. If NULL, these are the
-  median of the data and the range. The variance (\code{sigma.2})of the hidden states
-  follows an Inverse Gamma distribution with parameters \code{ka} and
-  \code{g}. If NULL, these are \code{2} and \code{diff(range(y))^2 / 50},
-  respectively.
+  \code{mu.alfa} and stdev \code{mu.beta}. If \code{NULL}, these are the
+  median of the data and the range. The square
+  root of the variance (\code{sigma.2})of the hidden states
+  follows a uniform distribution between $0$ and \code{maxVar}.
 
-  
   The model for the transition matrix is based on a random matrix
   \code{beta} whose diagonal is zero. The transition matrix, \code{Q},
   has the form:
@@ -116,17 +124,19 @@ RJ=TRUE, auto.label=0.60)
   \code{get.jump()} is made to find 'good' values.
 
   A relabelling of hidden states is performed to match biological
-  states. The states whom have the \code{normal.reference} value
-  inside a \code{normal.ref.percentile}\% confidence
+  states. The states that have the \code{normal.reference} value
+  inside a \code{normal.ref.percentile}\% probability interval
   based on a normal distribution with means the median of \code{mu}
   and sd the square root of the median of \code{sigma.2} are labelled as
-  'Normal'. If no state is labelled as 'Normal', the closest state to
-  \code{normal.reference} is chosen.
+  'Normal'. If no state is close enough to \code{normal.reference} then
+  there will not be a normal state. Bear this in mind for
+  normalization issues.
   If \code{auto.label} is not null, closest states to 'Normal' are also
   labelled as 'Normal' until a proportion of \code{auto.label} is
   reached. Please note that the default value is 0.60, so at least the
   60\% of the observations will be labelled as 'Normal'.
-  
+  If this laeblling is not satisfactory, you can relabel with
+  \code{\link{relabelStates}}.
     
 }
 \value{
@@ -155,6 +165,9 @@ RJ=TRUE, auto.label=0.60)
   \item{[[]]}{a list with as many components as chromosomes, of class
     \code{RJaCGH} (See below).}
   \item{Pos}{Pos vector.}
+  \item{Start}{Start positions.}
+  \item{End}{End positions.}
+  \item{probe.names}{Names of the probes.}
   \item{model}{model.}
   \item{Chrom}{Chromosome vector.}
   
@@ -181,11 +194,15 @@ RJ=TRUE, auto.label=0.60)
   \item{prob.states}{Marginal posterior probabilities of belonging to
     every hidden state.}
 }
+
+\note{
+  The data must be ordered by chromosome and within chromosome by position.
+  }
 \references{
-  Oscar M. Rueda and Ramon Diaz Uriarte. A flexible, accurate and
-  extensible statistical method for detecting genomic copy-number
-  changes. \url{http://biostats.bepress.com/cobra/ps/art9/}.
-  {http://biostats.bepress.com/cobra/ps/art9/}.
+  Rueda OM, Diaz-Uriarte R.
+  Flexible and Accurate Detection of Genomic Copy-Number Changes from
+  aCGH.
+  PLoS Comput Biol. 2007;3(6):e122
   
   Cappe, Moulines and Ryden, 2005. Inference in Hidden Markov
   Models. Springer.
@@ -199,7 +216,10 @@ RJ=TRUE, auto.label=0.60)
 \seealso{\code{\link{summary.RJaCGH}},
   \code{\link{states}}, \code{\link{model.averaging}},
   \code{\link{plot.RJaCGH}}, \code{\link{trace.plot}},
-  \code{\link{gelman.brooks.plot}}, \code{\link{collapseChain}}}
+  \code{\link{gelman.brooks.plot}}, \code{\link{collapseChain}},
+  \code{\link{relabelStates}}, \code{\link{pREC_A}},
+  \code{\link{pREC_S}}
+}
 
 \examples{
 y <- c(rnorm(100, 0, 1), rnorm(10, -3, 1), rnorm(20, 3, 1),

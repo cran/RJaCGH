@@ -14,7 +14,8 @@ simulateRJaCGH(n, x = NULL, mu, sigma.2, beta, start, q=-beta)
 \arguments{
   \item{n}{Number of observations to simulate}
   \item{x}{Distance to the next observation. Must be a vector of size
-    n-1. If NULL, a normal sample with 0 and 1 parameters is taken}
+    n-1 and normalized between zero and one.
+    If NULL, a vector of zeros is taken}
   \item{mu}{Vector of means for the hidden states}
   \item{sigma.2}{Vector of variances for the hidden states}
   \item{beta}{\code{beta} parameter of the transition matrix. Must be a square
@@ -35,10 +36,11 @@ A list with components
   \item{y }{Observations}
 
 }
-\references{  Oscar M. Rueda and Ramon Diaz Uriarte. A flexible, accurate and
-  extensible statistical method for detecting genomic copy-number
-  changes. \url{http://biostats.bepress.com/cobra/ps/art9/}.
-{http://biostats.bepress.com/cobra/ps/art9/}.
+\references{
+    Rueda OM, Diaz-Uriarte R.
+  Flexible and Accurate Detection of Genomic Copy-Number Changes from
+  aCGH.
+  PLoS Comput Biol. 2007;3(6):e122
 }
 
 \author{Oscar M. Rueda and Ramon Diaz-Uriarte}
