@@ -1,3 +1,7 @@
+1.2.1: Bug in plot.pREC_S (reordering of the array names)
+       Now one can choose the method of clustering in plot.pREC_S.
+       (default ward method)
+       Bug in pREC_S (nor deleting tmp files)
 1.2.0: Homocedastic model in RJaCGH
        Change in priors: uniform priors for sigma     
        pREC_A and pREC_S

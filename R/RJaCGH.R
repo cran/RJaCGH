@@ -2606,7 +2606,7 @@ prob.seq <- function(obj, from, to, filename, alteration="Gain") {
 
           breaks <- c(which.max(from <= breakpoints),
                       which.max(to <=breakpoints))
-          if(is.na(breaks[1]) | is.na(breaks[2])) browser()
+##           if(is.na(breaks[1]) | is.na(breaks[2])) browser()
           break.states <- breakstates[breaks[1]:breaks[2]]
 
           if (sum(break.states %in% inds)==length(break.states)) {
@@ -4050,6 +4050,19 @@ pREC_S.RJaCGH.array.genome <- function(obj, p, freq.array, alteration="Gain") {
       }
     }
   }
+  count <- 1 
+  for (n.array in obj[['array.names']]) {
+    K <- max(as.numeric(as.character(levels(obj[[n.array]]$k))))
+    for(k in 1:K) {
+      if(file.exists(paste(filename[count], k, sep=""))) {
+        if(!file.remove(paste(filename[count], k, sep=""))) {
+          cat("Can't remove temporal file ", filename[count], k,
+              "\n")
+        }
+      }
+    }
+    count <- count + 1
+  }
   attr(regions, "alteration") <- alteration
   attr(regions, "p") <- p
   attr(regions, "freq.array") <- freq.array
@@ -4133,7 +4146,7 @@ print.pREC_S.RJaCGH.array.genome <- function(x,...) {
 
 plot.pREC_S.RJaCGH.array <- function(x, array.labels=NULL, col=NULL,
                                     breaks=NULL, stats=TRUE,
-                                    dend=TRUE,...) {
+                                    dend=TRUE, method="single",...) {
   array.names <- attr(x, 'array.names')
   if (is.null(array.labels)) array.labels <- array.names
   k <- length(array.names)
@@ -4155,7 +4168,7 @@ plot.pREC_S.RJaCGH.array <- function(x, array.labels=NULL, col=NULL,
   diag(inc.mat) <- 0
   diag(length.mat) <- 0
   distances <- 1 - (inc.mat / matrix(max(inc.mat), nrow(inc.mat), ncol(inc.mat)))
-  obj.dend <- as.dendrogram(hclust(as.dist(distances)))
+  obj.dend <- as.dendrogram(hclust(as.dist(distances), method=method))
   par(mai=c(0.5, 0, 0.5, 0.5))
   if (dend) {
     reordering <- order.dendrogram(obj.dend)
@@ -4178,7 +4191,6 @@ plot.pREC_S.RJaCGH.array <- function(x, array.labels=NULL, col=NULL,
       col <- col[8:1]
     }
     else {
-      reordering <- 1:length(array.labels)
       col <- col[8:15]
     }
   }
@@ -4215,7 +4227,7 @@ plot.pREC_S.RJaCGH.array <- function(x, array.labels=NULL, col=NULL,
 plot.pREC_S.RJaCGH.array.Chrom <- function(x, array.labels=NULL,
                                           Chrom=NULL, stats=TRUE,
                                           col=NULL, breaks=NULL,
-                                          dend=TRUE,...) {
+                                          dend=TRUE, method="single",...) {
   array.names <- attr(x, 'array.names')
   if (is.null(array.labels)) array.labels <- array.names
   if(!is.null(Chrom)) {
@@ -4226,7 +4238,7 @@ plot.pREC_S.RJaCGH.array.Chrom <- function(x, array.labels=NULL,
         attr(obj, 'class') <- "pREC_S.RJaCGH.array"
         attr(obj, 'array.names') <- attr(x, 'array.names')
         plot(obj, array.labels=array.labels, stats=stats,
-             main=paste("Chromosome ", Chrom), dend=dend,...)
+             main=paste("Chromosome ", Chrom), dend=dend, method=method,...)
       }
   }
   else {
@@ -4257,7 +4269,7 @@ plot.pREC_S.RJaCGH.array.Chrom <- function(x, array.labels=NULL,
     diag(inc.mat) <- 0
     diag(length.mat) <- 0
     distances <- 1 - (inc.mat / matrix(max(inc.mat), nrow(inc.mat), ncol(inc.mat)))
-    obj.dend <- as.dendrogram(hclust(as.dist(distances)))
+    obj.dend <- as.dendrogram(hclust(as.dist(distances), method=method))
     par(mai=c(0.5, 0, 0.5, 0.5))
     if (dend) {
       reordering <- order.dendrogram(obj.dend)
@@ -4270,7 +4282,6 @@ plot.pREC_S.RJaCGH.array.Chrom <- function(x, array.labels=NULL,
       reordering <- 1:length(array.labels)
       plot.new()
     }
-
     if (is.null(col)) {
       ## default palette taken from redgreen from
       ## gplots, Gregory R. Warnes
@@ -4281,7 +4292,6 @@ plot.pREC_S.RJaCGH.array.Chrom <- function(x, array.labels=NULL,
         col <- col[8:1]
       }
       else {
-        reordering <- 1:length(array.labels)
         col <- col[8:15]
       }
     }
@@ -4292,6 +4302,7 @@ plot.pREC_S.RJaCGH.array.Chrom <- function(x, array.labels=NULL,
       breaks <- breaks - 0.05
       breaks[length(breaks)] <- breaks[length(breaks)] + 0.10
     }
+
     image(x=1:k, y=1:k, z=inc.mat,
           axes=FALSE, col=col, breaks=breaks, xlab="", ylab="",...)
     axis(side=1, at=1:k, labels=array.labels[reordering], las=2,
@@ -4313,7 +4324,7 @@ plot.pREC_S.RJaCGH.array.Chrom <- function(x, array.labels=NULL,
 plot.pREC_S.RJaCGH.array.genome <- function(x, array.labels=NULL,
                                           Chrom=NULL, stats=TRUE,
                                           col=NULL, breaks=NULL,
-                                          dend=TRUE,...) {
+                                          dend=TRUE, method="single",...) {
   array.names <- attr(x, 'array.names')
   if (is.null(array.labels)) array.labels <- array.names
   if(!is.null(Chrom)) {
@@ -4324,7 +4335,8 @@ plot.pREC_S.RJaCGH.array.genome <- function(x, array.labels=NULL,
         attr(obj, 'class') <- "pREC_S.RJaCGH.array"
         attr(obj, 'array.names') <- attr(x, 'array.names')
         plot(obj, array.labels=array.labels, stats=stats,
-             main=paste("Chromosome ", Chrom), dend=dend, ...)
+             main=paste("Chromosome ", Chrom), dend=dend,
+                                          method=method, ...)
       }
     }
   else {
@@ -4356,7 +4368,7 @@ plot.pREC_S.RJaCGH.array.genome <- function(x, array.labels=NULL,
     diag(inc.mat) <- 0
     diag(length.mat) <- 0
     distances <- 1 - (inc.mat / matrix(max(inc.mat), nrow(inc.mat), ncol(inc.mat)))
-    obj.dend <- as.dendrogram(hclust(as.dist(distances)))
+    obj.dend <- as.dendrogram(hclust(as.dist(distances), method=method))
     
     par(mai=c(0.5, 0, 0.5, 0.5))
     if (dend) {
@@ -4380,7 +4392,6 @@ plot.pREC_S.RJaCGH.array.genome <- function(x, array.labels=NULL,
         col <- col[8:1]
       }
       else {
-        reordering <- 1:length(array.labels)
         col <- col[8:15]
       }
     }

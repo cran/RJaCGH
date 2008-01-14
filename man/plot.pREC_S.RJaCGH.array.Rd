@@ -1,4 +1,5 @@
 \name{plot.pREC_S.RJaCGH.array}
+\alias{plot.pREC_S}
 \alias{plot.pREC_S.RJaCGH.array}
 \alias{plot.pREC_S.RJaCGH.array.Chrom}
 \alias{plot.pREC_S.RJaCGH.array.genome}
@@ -10,13 +11,13 @@
 }
 \usage{
 \method{plot}{pREC_S.RJaCGH.array}(x, array.labels = NULL, col = NULL,
-breaks = NULL, stats = TRUE, dend=TRUE, \ldots)
+breaks = NULL, stats = TRUE, dend=TRUE, method="single", \ldots)
 \method{plot}{pREC_S.RJaCGH.array.Chrom}(x, array.labels = NULL,
 Chrom = NULL, stats = TRUE, col = NULL,
-breaks = NULL, dend=TRUE, \ldots)
+breaks = NULL, dend=TRUE, method="single", \ldots)
 \method{plot}{pREC_S.RJaCGH.array.genome}(x, array.labels = NULL,
 Chrom=NULL, stats = TRUE, col = NULL,
-breaks = NULL, dend=TRUE, \ldots)
+breaks = NULL, dend=TRUE, method="single", \ldots)
 
 
 }
@@ -35,6 +36,8 @@ breaks = NULL, dend=TRUE, \ldots)
     length \code{length(col) + 1}}
   \item{dend}{Logical. If \code{TRUE}, a clustering of arrays is performed with
     \code{\link{hclust}} and arrays reordered.}
+  \item{method}{Clustering method to apply. See \code{\link{hclust}}.
+    Default is 'single'.}
   \item{\dots}{Additional arguments passed to \code{\link{image}}}
 }
 \details{
@@ -44,7 +47,8 @@ breaks = NULL, dend=TRUE, \ldots)
   columns as the number of arrays are. The more altered probes
   two arrays share the brighter the color is. The diagonals
   are turned off to improve the visibility of the groups. If
-  \code{dend} is \code{TRUE}, a hierarchical clustering on arrays
+  \code{dend} is \code{TRUE}, a hierarchical clustering
+  (method \code{method}) on arrays
   is performed based on the dissimilarity measure defined as:
   $1 - (inc.mat / max(inc.mat)$ where \code{inc.mat} is the matrix with
   the number of arrays shared by every pair of arrays. Then a dendrogram
