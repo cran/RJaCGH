@@ -176,6 +176,10 @@ start.k = NULL, RJ=TRUE, auto.label=NULL)
   \code{prob.b}, \code{prob.d}, \code{prob.s}, \code{prob.c}, \code{y},
   \code{Pos}, \code{x} as described before, plus a list with as many
   components of number of max hidden states fitted.
+  The length of \code{k} equals aproximately $2$ times \code{TOT},
+  because in every sweep of the algorithm there are two tries to jump
+  between models, so two times to explore the probability of the number
+  of hidden states.
   For every hidden markov model fitted, a list is returned with
   components:
   
@@ -193,6 +197,11 @@ start.k = NULL, RJ=TRUE, auto.label=NULL)
   \item{state.labels}{Labels of the biological states.}
   \item{prob.states}{Marginal posterior probabilities of belonging to
     every hidden state.}
+  The number of rows of components \code{mu}, \code{sigma.2} and
+  \code{beta} is random, because it depends on the number of times
+  a particular model is visited and on the number of moves between
+  models, because when we visit a new model we also explore the space
+  of its means, variances and parameters of its transition functions.
 }
 
 \note{

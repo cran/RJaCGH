@@ -1,3 +1,11 @@
+1.2.2. Added vignette in /inst/doc/
+       Bug in print.summary.RJaCGH.Chrom
+       Typo in chainsSelect.Rd
+       Added method for RJaCGH.Chrom in chainsSelect() and bug fixing.
+       Explanation of the dimension of k, means, variances and parameters 
+       of the transition funcionts in RJaCGH.Rd
+       Removed restriction for max.dist to be higher than all probe 
+       distances.
 1.2.1: Bug in plot.pREC_S (reordering of the array names)
        Now one can choose the method of clustering in plot.pREC_S.
        (default ward method)

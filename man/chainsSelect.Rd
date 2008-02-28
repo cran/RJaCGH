@@ -1,6 +1,7 @@
 \name{chainsSelect}
 \alias{chainsSelect}
 \alias{chainsSelect.RJaCGH}
+\alias{chainsSelect.RJaCGH.Chrom}
 \alias{chainsSelect.RJaCGH.genome}
 \alias{chainsSelect.RJaCGH.array}
 
@@ -11,10 +12,11 @@
   parallel RJMCMC chains.
 }
 \usage{
-chainsSelect(obj, nutrim=4, trim=NULL)
-\method{chainsSelect}{RJaCGH}(obj, nutrim=4, trim=NULL)
-\method{chainsSelect}{RJaCGH.genome}(obj, nutrim = 4, trim = NULL)
-\method{chainsSelect}{RJaCGH.array}(obj, nutrim = 4, trim = NULL)
+chainsSelect(obj, nutrim=NULL, trim=NULL)
+\method{chainsSelect}{RJaCGH}(obj, nutrim=NULL, trim=NULL)
+\method{chainsSelect}{RJaCGH.Chrom}(obj, nutrim = NULL, trim = NULL)
+\method{chainsSelect}{RJaCGH.genome}(obj, nutrim = NULL, trim = NULL)
+\method{chainsSelect}{RJaCGH.array}(obj, nutrim = NULL, trim = NULL)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -31,9 +33,7 @@ chainsSelect(obj, nutrim=4, trim=NULL)
   see \code{\link{gelman.brooks.plot}} diagnostics
   for \code{k}, the number of states is not defined. This method removes
   the chains whose k trajectories are most unusual compared to the rest.
-  In the current version of RJaCGH, this method is not defined for
-  chromosome models (\code{RJaCGH.Chrom}).
-  After removing otilers chains, one can run \code{gelman.brooks.plot}
+  After removing outlier chains, one can run \code{gelman.brooks.plot}
   to check for convergnce of the remaining chains and later
   \code{collapseChain} to join them, or directly this last function.
 }
@@ -71,7 +71,7 @@ fit.genome <- list()
 for (i in 1:4) {
 fit.genome[[i]] <- RJaCGH(y=y, Pos=Pos, Chrom=Chrom, model="genome",
 burnin=10, TOT=1000, jump.parameters=jp, k.max = 4)
-fit.genome <- chainsSelect(fit.genome, nutrim=1)
 }
+fit.genome <- chainsSelect(fit.genome, nutrim=1)
 }
 \keyword{models}% at least one, from doc/KEYWORDS

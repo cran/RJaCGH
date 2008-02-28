@@ -319,8 +319,11 @@ MetropolisSweep.C <- function(y, x, k.max, Chrom, model=NULL,
     obj[[i]]$prob.sigma.2 <- length(unique(obj[[i]]$sigma.2[,1])) / length(obj[[i]]$sigma.2[,1])
     obj[[i]]$prob.beta <- length(unique(obj[[i]]$beta[2,1,])) / length(obj[[i]]$beta[2,1,])
   }
-  
-  obj$k <- res$k[-c(1:(2*burnin+1))]
+  if (burnin> 0) obj$k <- res$k[-c(1:(2*burnin))]
+  else obj$k <- res$k
+  ## If there are random moves we won't have 2*TOT k values ##
+  ## we take out the missing values (zero's) ##
+  obj$k <- obj$k[obj$k > 0]
   obj$k <- factor(obj$k , levels=1:k.max)
   ## Relabel states
   for (i in 1:k.max) {
@@ -453,10 +456,9 @@ RJMCMC.NH.HMM.Metropolis <- function(y, Chrom=NULL, x=NULL,
   }
   ## Scale x'2 to avoid overflow
   if (!is.null(max.dist)) {
-    if (max.dist < max(x, na.rm=TRUE)) {
-      stop("max.dist must be greater than all distances between spots\n")
-    }
     x <- x/max.dist
+    ## to prevent scale for a maxdist lower than some distance
+    x[x > 1] <- 1
   }
   else if(max(x, na.rm=TRUE)!=0){
     x <- x/max(x, na.rm=TRUE)
@@ -1021,8 +1023,9 @@ summary.RJaCGH.Chrom <- function(object, point.estimator="median",
                           point.estimator=point.estimator,
                           quantiles=quantiles)
     }
+    names(res) <- unique(object$Chrom)
+    class(res) <- "summary.RJaCGH.Chrom"
   }
-  class(res) <- "summary.RJaCGH.Chrom"
   res
 }
 
@@ -1493,6 +1496,8 @@ plot.RJaCGH.genome <- function(x, k=NULL,
   col[as.numeric(res$states) %in% grep("[L]", levels(res$states))] <- 3
   pch <- rep(16, length(x$y))
   pch[as.numeric(res$states) %in% grep("[2-9]", levels(res$states))] <- 17
+  Pos <- x$Pos
+
   ## Start of every Chromosome
   start.Chrom <- c(x$Pos[which(!duplicated(x$Chrom))],
                    x$Pos[length(x$Chrom)] + 1)
@@ -1503,7 +1508,7 @@ plot.RJaCGH.genome <- function(x, k=NULL,
     }
   yy <- rep(c(ylim, rev(ylim)), length.out=length(xx))
 
-  plot(x$y~x$Pos, pch=pch, col=col, ylim=ylim, ylab="Log2 ratio", xlab="Pos.Base",
+  plot(x$y~Pos, pch=pch, col=col, ylim=ylim, ylab="Log2 ratio", xlab="Pos.Base",
        main=main.text, type="n")
   polygon(xx, yy, col="gray85", xpd=TRUE)
   points(x$y~x$Pos, pch=pch, col=col)
@@ -1646,7 +1651,6 @@ plot.RJaCGH.array <- function(x, show="frequency", weights=NULL,
    par(cex.lab=cex*0.8, cex.main=cex*0.9, cex.axis=cex*0.8)
    par(mar=c(5,4,4,4) + 0.1)
    Pos <- x[[1]]$Pos
-
    col <- rep(1, length(states))
    col[states >= 50] <- 2
    col[states <= -50] <- 3
@@ -2103,31 +2107,31 @@ collapseChain.RJaCGH.array <- function(obj) {
 }
 
 
-chainsSelect <- function(obj, nutrim = 4, trim = NULL) {
+chainsSelect <- function(obj, nutrim = NULL, trim = NULL) {
   UseMethod("chainsSelect", obj[[1]])
 }
 
-chainsSelect.RJaCGH <- function(obj, nutrim = 4, trim = NULL) {
+chainsSelect.RJaCGH <- function(obj, nutrim = NULL, trim = NULL) {
     ## This uses too much memory: obj is passed by
     ## copy, and we make yet another partial copy at the end
     n <- length(obj)
-
     if((is.null(nutrim) & is.null(trim)) |
        (!is.null(nutrim) & !is.null(trim)))
         stop("Exactly one of nutrim or trim must have non-NULL values")
-
     if (is.null(nutrim)) {
-        if(trim > 0.5)
-            stop("Trim cannot be larger than 0.5")
-        lo <- floor(n * trim) + 1
-        hi <- n + 1 - lo
-    } else {
-        remove <- n - nutrim
-        lo <- floor(remove/2) + 1
-        hi <- n - (remove - lo + 1)
-##        print(paste("lo ", lo, " hi ", hi))
+        nutrim <- round(trim * n)
+        if(nutrim >= n)
+            stop(paste("Specify a smaller trim: your trim ",
+                       trim, "leads to selecting no chains"))
     }
-    meank <- unlist(lapply(obj,function(x) mean(as.numeric(as.character(x$k)))))
+    else {
+        if(nutrim >= n)
+            stop("Number to trim must be smaller than number of chains")
+    }
+    lo <- floor(nutrim/2) + 1
+    hi <- n - (nutrim - lo + 1)
+    meank <- unlist(lapply(obj,function(x)
+                           mean(as.numeric(as.character(x$k)))))
     keepInd <- order(meank)[lo:hi]
     print(paste("keepInd ", paste(keepInd, collapse = " ")))
     newobj <- list()
@@ -2140,40 +2144,75 @@ chainsSelect.RJaCGH <- function(obj, nutrim = 4, trim = NULL) {
     newobj
 }
 
-chainsSelect.RJaCGH.genome <- function(obj, nutrim = 4, trim = NULL) {
-    newobj <- chainsSelect.RJaCGH(obj, nutrim = nutrim, trim = trim)
-    class(newobj) <- class(obj)
-    newobj
+chainsSelect.RJaCGH.genome <- function(obj, nutrim = NULL, trim = NULL) {
+  newobj <- chainsSelect.RJaCGH(obj, nutrim = nutrim, trim = trim)
+  class(newobj) <- class(obj)
+  newobj
 }
 
 
-chainsSelect.RJaCGH.Chrom <- function(obj, nutrim = 4, trim = NULL) {
-##   newobj <- list()
-##   for (chr in unique(obj[[1]]$Chrom)) {
-##     oldobj <- lapply(obj, function(x) x[[chr]])
-##     newobj[[chr]] <- chainsSelect(oldobj, nutrim=nutrim, trim=trim)
-##     newobj[[chr]] <- collapseChain(newobj[[chr]])
-##   }
-##   newobj$model <- obj[[1]]$model
-##   newobj$Pos <- obj[[1]]$Pos
-##   newobj$Pos.rel <- obj[[1]]$Pos.rel
-##   class(newobj) <- "RJaCGH.Chrom"
-##   newobj
+chainsSelect.RJaCGH.Chrom <- function(obj, nutrim = NULL, trim = NULL) {
+  if((is.null(nutrim) & is.null(trim)) |
+     (!is.null(nutrim) & !is.null(trim)))
+    stop("Exactly one of nutrim or trim must have non-NULL values")
+  newobj <- list()
+  n <- length(obj)
+  if (is.null(nutrim)) {
+    nutrim <- floor(n * trim)
+    trim <- NULL
+  }
+    ## trim
+    for (i in 1:(n-nutrim)) {
+      newobj[[i]] <- list()
+    }
+  for (chr in unique(obj[[1]]$Chrom)) {
+    oldobj <- lapply(obj, function(x) x[[chr]])
+     tmpobj <- chainsSelect(oldobj, nutrim=nutrim, trim=trim)
+     for (i in 1:(n-nutrim)) {
+       newobj[[i]][[chr]] <- tmpobj[[i]]
+     }
+   }
+   for (i in 1:(n-nutrim)) {
+     newobj[[i]]$model <- obj[[i]]$model
+     newobj[[i]]$Pos <- obj[[i]]$Pos
+     newobj[[i]]$Pos.rel <- obj[[i]]$Pos.rel
+     newobj[[i]]$Chrom <- obj[[i]]$Chrom
+     attr(newobj[[i]], 'names') <- attr(obj[[i]], 'names')
+     class(newobj[[i]]) <- "RJaCGH.Chrom"
+   }
+   newobj
 }
 
 
-chainsSelect.RJaCGH.array <- function(obj, nutrim = 4, trim = NULL) {
-  C <- length(obj)
+chainsSelect.RJaCGH.array <- function(obj, nutrim = NULL, trim = NULL) {
+  if((is.null(nutrim) & is.null(trim)) |
+     (!is.null(nutrim) & !is.null(trim)))
+    stop("Exactly one of nutrim or trim must have non-NULL values")
+  
+  n <- length(obj)
   newobj <- list()
   array.names <- obj[[1]]$array.names
+  if (is.null(nutrim)) {
+    nutrim <- floor(n * trim)
+    trim <- NULL
+  }
+  for (j in 1:(n-nutrim)) {
+    newobj[[j]] <- list()
+  }
   for (i in array.names) {
-      newobj[[i]] <- list()
-      obj.temp <- list()
-      for (j in 1:C) {
-          obj.temp[[j]] <- obj[[j]][[i]]
-      }
-      newobj[[i]] <- chainsSelect(obj.temp, nutrim = nutrim, trim = trim)
-      class(newobj[[i]]) <- class(obj[[j]][[i]])
+    obj.temp <- list()
+    for (j in 1:n) {
+      obj.temp[[j]] <- obj[[j]][[i]]
+    }
+    obj.temp<- chainsSelect(obj.temp, nutrim = nutrim, trim = trim)
+    for (j in 1:(n-nutrim)) {
+      newobj[[j]][[i]] <- obj.temp[[j]]
+      class(newobj[[j]]) <- class(obj[[j]])
+    }
+  }
+  for (j in 1:(n-nutrim)) {
+    newobj[[j]]$array.names <- obj[[j]]$array.names
+    attr(newobj[[j]], 'names') <- attr(obj[[j]], 'names')
   }
   class(newobj) <- class(obj)
   newobj
@@ -4420,23 +4459,24 @@ plot.pREC_S.RJaCGH.array.genome <- function(x, array.labels=NULL,
   }
 }
 
+## Not correct (does not take into account mixing proportions)
 
-RJaCGHDensity <- function(obj, k=NULL,...) {
-  UseMethod("RJaCGHDensity")
-}
+## RJaCGHDensity <- function(obj, k=NULL,...) {
+##   UseMethod("RJaCGHDensity")
+## }
 
-RJaCGHDensity.RJaCGH <- function(obj, k=NULL,...) {
-  hist(obj$y, probability=TRUE,...)
-  if (is.null(k)) {
-    k <- which.max(summary(obj$k))
-  }
-  obj.sum <- summary(obj, k=k, quantiles=0.5)
-  x <- seq(from=min(obj$y), to=max(obj$y), length=1000)
-  y <- matrix(0, 1000, k)
-  for (i in 1:k) {
-    y[,i] <- 
-      dnorm(x, obj.sum$mu[i], sqrt(obj.sum$sigma.2[i]))
-  }
-  y <- apply(y, 1, mean)
-  lines(x, y, col=2)
-}
+## RJaCGHDensity.RJaCGH <- function(obj, k=NULL,...) {
+##   hist(obj$y, probability=TRUE,...)
+##   if (is.null(k)) {
+##     k <- which.max(summary(obj$k))
+##   }
+##   obj.sum <- summary(obj, k=k, quantiles=0.5)
+##   x <- seq(from=min(obj$y), to=max(obj$y), length=1000)
+##   y <- matrix(0, 1000, k)
+##   for (i in 1:k) {
+##     y[,i] <- 
+##       dnorm(x, obj.sum$mu[i], sqrt(obj.sum$sigma.2[i]))
+##   }
+##   y <- apply(y, 1, mean)
+##   lines(x, y, col=2)
+## }
