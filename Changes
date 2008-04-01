@@ -1,3 +1,6 @@
+1.2.4. Fixed bug in MetropolisUpdate and changed move for sigma.2
+1.2.3. Fixed bug in Birth move (now the prior of sigma2 behaves as 
+       documented).
 1.2.2. Added vignette in /inst/doc/
        Bug in print.summary.RJaCGH.Chrom
        Typo in chainsSelect.Rd

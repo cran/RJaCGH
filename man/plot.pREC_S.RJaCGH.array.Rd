@@ -79,7 +79,7 @@ breaks = NULL, dend=TRUE, method="single", \ldots)
 
 \seealso{\code{\link{pREC_S}}, \code{\link{hclust}}, \code{\link{image}}}
 \examples{
-y <- c(rnorm(100, 0, 1), rnorm(10, -3, 1), rnorm(20, 3, 1),
+\dontrun{y <- c(rnorm(100, 0, 1), rnorm(10, -3, 1), rnorm(20, 3, 1),
        rnorm(100,0, 1)) 
 Pos <- sample(x=1:500, size=230, replace=TRUE)
 Pos <- cumsum(Pos)
@@ -98,7 +98,7 @@ Pos=Pos, Chrom=Chrom, model="genome",
 burnin=1000, TOT=1000, jump.parameters=jp, k.max = 4)
 Reg1 <- pREC_S(fit.array.genome, p=0.4, freq.array=2,
 alteration="Gain")
-plot(Reg1)
+plot(Reg1)}
 }
 \keyword{models}% at least one, from doc/KEYWORDS
 

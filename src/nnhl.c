@@ -264,7 +264,7 @@ void Birth(double *y, int *varEqual, int *genome, int *index,
 	   int *accepted, double *maxVar) {
 
     double *candidatoQ; candidatoQ = Calloc((*r+1)*(*r+1), double);
-    double probBirth;
+    double probBirth = 0;
     int newState;
     double loglikCandidate = 0;
     double loglikPartial = 0;
@@ -282,6 +282,7 @@ void Birth(double *y, int *varEqual, int *genome, int *index,
     }
     else {
       candidatoSigma2[*r] = runif(0, *maxVar);
+      candidatoSigma2[*r] = pow(candidatoSigma2[*r], 2);
     }
 
     /*  Check that the new variance does not exceed the maximum variance     */
@@ -352,7 +353,7 @@ void Death(double *y, int *genome, int *index, double *mu, double *sigma2,
 	   int *accepted) {
 
   double *candidatoQ; candidatoQ = Calloc((*r-1)*(*r-1), double);
-  double probDeath;
+  double probDeath = 0;
   int death, indexBeta=0, indexMu=0;
   int newState;
   double loglikCandidate = 0;
@@ -457,7 +458,7 @@ void Split(double *y, int *varEqual, int *genome, int *index,
   double *candidatoQ; candidatoQ = Calloc((*r+1)*(*r+1), double);
 
   double priorSigma2, priorCandidatoSigma2;
-  double probSplit;
+  double probSplit = 0;
   int split, indexBeta=0, indexMu=0, indexEpj=0, indexUi=0;
   int newState;
   double epMu, epSigma2;
@@ -706,7 +707,7 @@ void Combine(double *y, int *varEqual, int *genome, int *index,
 
   
   double *candidatoQ; candidatoQ = Calloc((*r-1)*(*r-1), double);
-  double probCombine;
+  double probCombine = 0;
   double priorSigma2, priorCandidatoSigma2;
   int combine, indexBeta=0, indexMu=0, indexEpj=0, indexUi=0;
   int newState;
@@ -974,16 +975,14 @@ void MetropolisUpdate(double *y, double *x, int *varEqual,
   /*  Update sigma2 */
   loglikCandidate = 0;
   acepProb = 0;
-  candidatoSigma2[0] = exp(log(sqrt(sigma2[0])) + rnorm(0, *sigmaTauSigma2));
-  candidatoSigma2[0] = pow(candidatoSigma2[0], 2);
+  candidatoSigma2[0] = exp(log(sigma2[0]) + rnorm(0, *sigmaTauSigma2));
   if (candidatoSigma2[0] > *maxVar) reachedMaxVar = 1;
   for (i=1; i<*r; ++i) {
     if (*varEqual) {
       candidatoSigma2[i] = candidatoSigma2[0];
     }
     else {
-      candidatoSigma2[i] = exp(log(sqrt(sigma2[i])) + rnorm(0, *sigmaTauSigma2));
-      candidatoSigma2[i] = pow(candidatoSigma2[i], 2);
+      candidatoSigma2[i] = exp(log(sigma2[i]) + rnorm(0, *sigmaTauSigma2));
       if (candidatoSigma2[i] > *maxVar) reachedMaxVar = 1;
     }
   }
@@ -1015,10 +1014,10 @@ void MetropolisUpdate(double *y, double *x, int *varEqual,
       Free(yy);
     }
     acepProb = acepProb + loglikCandidate - *loglikLast;
-    acepProb = exp(acepProb);
     for (i=0; i<*r; ++i) {
-      acepProb = acepProb * sqrt(candidatoSigma2[i]) / sqrt(sigma2[i]);
+      acepProb = acepProb + log(candidatoSigma2[i]) - log(sigma2[i]);
     }
+    acepProb = exp(acepProb);
     if (acepProb > 1) acepProb = 1;
     if (runif(0,1) < acepProb) {
       for (i=0; i<*r; ++i) sigma2[i] = candidatoSigma2[i];
@@ -1062,7 +1061,9 @@ void MetropolisUpdate(double *y, double *x, int *varEqual,
       Free(yy);
     }
     acepProb = acepProb + loglikCandidate - *loglikLast;
-    for (i=0; i<*r; ++i) {
+    /* correct jacobian for multiplicative random walk */
+    for (i=0; i< *r * *r; ++i) {
+      if (i % (*r+1)) acepProb = acepProb + log(candidatoBeta[i]) - log(beta[i]);
     }
     acepProb = exp(acepProb);
     if (acepProb > 1) acepProb = 1;
