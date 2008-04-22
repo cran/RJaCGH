@@ -992,8 +992,16 @@ void MetropolisUpdate(double *y, double *x, int *varEqual,
   }
   /*  Check candidates doesn't reach Maximum variance */
   if (!reachedMaxVar) {
-    for(i=0; i<*r; ++i) {
-      acepProb = acepProb + log(1/sqrt(candidatoSigma2[i])) - log(1/sqrt(sigma2[i]));
+    /* If variances are equal we should not do this r times */
+    if (*varEqual) {
+      acepProb = acepProb + (log(1/(2*sqrt(candidatoSigma2[0]))) - 
+				    log(1/(2*sqrt(sigma2[0]))));
+    }
+    else {
+      for(i=0; i<*r; ++i) {
+	acepProb = acepProb + (log(1/(2*sqrt(candidatoSigma2[i]))) - 
+			       log(1/(2*sqrt(sigma2[i]))));
+      }
     }
     for (k=0; k < *genome; ++k) {
       nn = index[k+1] - index[k];
@@ -1014,8 +1022,15 @@ void MetropolisUpdate(double *y, double *x, int *varEqual,
       Free(yy);
     }
     acepProb = acepProb + loglikCandidate - *loglikLast;
-    for (i=0; i<*r; ++i) {
-      acepProb = acepProb + log(candidatoSigma2[i]) - log(sigma2[i]);
+    /* If variances are equal we should not do this r times */
+
+    if (*varEqual) {
+      acepProb = acepProb + log(candidatoSigma2[0]) - log(sigma2[0]);
+    }
+    else {
+      for (i=0; i<*r; ++i) {
+	acepProb = acepProb + log(candidatoSigma2[i]) - log(sigma2[i]);
+      }
     }
     acepProb = exp(acepProb);
     if (acepProb > 1) acepProb = 1;

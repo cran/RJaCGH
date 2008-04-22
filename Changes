@@ -1,3 +1,4 @@
+1.2.5. Re-Fixed bug in MetropolisUpdate
 1.2.4. Fixed bug in MetropolisUpdate and changed move for sigma.2
 1.2.3. Fixed bug in Birth move (now the prior of sigma2 behaves as 
        documented).

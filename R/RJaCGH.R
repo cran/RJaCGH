@@ -418,7 +418,6 @@ MetropolisSweep.C <- function(y, x, k.max, Chrom, model=NULL,
   obj$prob.c <- res$probC
   obj$y <- y
   obj$x <- x
-  obj$x[obj$x==-1] <- NA
   rm(res)
   gc()
   attr(obj, "auto.label") <- auto.label
@@ -466,6 +465,8 @@ RJMCMC.NH.HMM.Metropolis <- function(y, Chrom=NULL, x=NULL,
 
   ## convert NA's to -1
   x[is.na(x)] <- -1
+  ## convert overlaps to 0
+  x[x<0] <- 0
   
   ##Hyperparameters
   if(is.null(mu.alfa)) mu.alfa <- median(y)
