@@ -2,7 +2,7 @@
 \alias{relabelStates}
 \alias{relabelStates.RJaCGH}
 \alias{relabelStates.RJaCGH.Chrom}
-\alias{relabelStates.RJaCGH.genome}
+\alias{relabelStates.RJaCGH.Genome}
 \alias{relabelStates.RJaCGH.array}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{Relabelling of hidden states to biological states of alteration. }
@@ -11,44 +11,45 @@
   alteration ('normal', 'loss1', 'loss2', 'gain1', 'gain2'...)
 }
 \usage{
-relabelStates(obj, normal.reference = 0, normal.ref.percentile = 0.95, auto.label = NULL)
+relabelStates(obj, normal.reference = 0,
+              window = NULL, singleState = FALSE)
 \method{relabelStates}{RJaCGH}(obj, normal.reference = 0,
-normal.ref.percentile = 0.95, auto.label = NULL)
+                               window = NULL, singleState = FALSE)
 \method{relabelStates}{RJaCGH.Chrom}(obj, normal.reference = 0,
-normal.ref.percentile = 0.95, auto.label = NULL)
-\method{relabelStates}{RJaCGH.genome}(obj, normal.reference = 0,
-normal.ref.percentile = 0.95, auto.label = NULL)
+                              window = NULL, singleState = FALSE)
+\method{relabelStates}{RJaCGH.Genome}(obj, normal.reference = 0,
+                       window = NULL, singleState = FALSE)
 \method{relabelStates}{RJaCGH.array}(obj, normal.reference = 0,
-normal.ref.percentile = 0.95, auto.label = NULL)
-
+                       window = NULL, singleState = FALSE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{obj}{An object returned form RJaCGH of class 'RJaCGH',
-  'RJaCGH.Chrom', 'RJaCGH.genome', 'RJaCGH.array'.}
+  'RJaCGH.Chrom', 'RJaCGH.Genome', 'RJaCGH.array'.}
     \item{normal.reference}{The value considered as the mean of the normal
     state. See details. By default is \code{0}.}
-  \item{normal.ref.percentile}{Percentage for the relabelling of
-    states. See details. by default is 0.95.}
-    \item{auto.label}{If not NULL, should be the minimum proportion of
-  observations labeled as 'Normal'. See details.}
+  \item{window}{Multiplier of the standard deviation of the data to
+    dtermine the width of the normal state. See details. Default (window
+    = NULL) is 1.}
+    \item{singleState}{If TRUE, each state is assigned a probability of
+      1 of being Gained or Lost or Normal, and 0 of being
+      anyting else. This mimics the behavior of previous versions of
+      RJaCGH. See details.}
 
 }
 \details{
   A relabelling of hidden states is performed to match biological
-  states. The states that have the \code{normal.reference} value
-  inside a \code{normal.ref.percentile}\% probability interval
-  based on a normal distribution with means the median of \code{mu}
-  and sd the square root of the median of \code{sigma.2} are labelled as
-  'Normal'. If no state is close enough to \code{normal.reference} then
-  there will not be a normal state. Bear this in mind for
-  normalization issues.
-  If \code{auto.label} is not null, closest states to 'Normal' are also
-  labelled as 'Normal' until a proportion of \code{auto.label} is
-  reached. Please note that the default value is 0.60, so at least the
-  60\% of the observations will be labelled as 'Normal'.
-  If this laeblling is not satisfactory, you can relabel manually. See 
-  the example.
+  states. We first define an upper and lower limit as: normal.reference
+  +/- window. Next, we compute as the probability that a given state is
+  gained the area beyond the upper limit, and the area up to the lower
+  limit as the probability that a given state is lost. The areas are
+  obtained from a Normal with posterior estimates of mean and
+  standard deviation for each hidden state. The probability of being in
+  a normal state is defined as 1 - prob.gained - prob.loss.
+  
+  Labels are assigned based on the state with highest probability. If we
+  set singleState = TRUE, all the probability is assigned to a single
+  condition, the one with largest probability.
 }
 \value{
 An object of the same class as \code{obj} with hidden states relabelled.
@@ -79,8 +80,6 @@ plot(fit.chrom)
 fit.chrom.2 <- relabelStates(fit.chrom, normal.reference=3)
 plot(fit.chrom.2)
 
-## Manual labelling
-fit.chrom.2[[1]][[2]]$state.labels <- c("Normal", "Normal")
 }
 
 \keyword{ models }% at least one, from doc/KEYWORDS

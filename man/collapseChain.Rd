@@ -2,7 +2,7 @@
 \alias{collapseChain}
 \alias{collapseChain.RJaCGH}
 \alias{collapseChain.RJaCGH.Chrom}
-\alias{collapseChain.RJaCGH.genome}
+\alias{collapseChain.RJaCGH.Genome}
 \alias{collapseChain.RJaCGH.array}
 
 %- Also NEED an '\alias' for EACH other topic documented here.
@@ -14,22 +14,22 @@ method of class 'RJaCGH'.
 \usage{
 collapseChain(obj)
 \method{collapseChain}{RJaCGH}(obj)
-\method{collapseChain}{RJaCGH.genome}(obj)
+\method{collapseChain}{RJaCGH.Genome}(obj)
 \method{collapseChain}{RJaCGH.Chrom}(obj)
 \method{collapseChain}{RJaCGH.array}(obj)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{obj}{a list containing several parallel chains; that is objects
-    of any of RJaCGH, RJaCGH.Chrom, RJaCGH.genome, RJaCGH.array classes
+    of any of RJaCGH, RJaCGH.Chrom, RJaCGH.Genome, RJaCGH.array classes
     (obviously, all of the same class).}
 }
 \details{
 If several parallel chains are run and if they converge (see
-\code{\link{gelman.brooks.plot}}) they should be joined in one. This is
+\code{\link{gelman.rubin.plot}}) they should be joined in one. This is
 what this method does.
 Please note that this function returns only one object, so one can not
-call later \code{gelman.brooks.plot}.
+call later \code{gelman.rubin.plot}.
 }
 \value{
 An object of the same class as any of the list \code{obj}.
@@ -62,11 +62,11 @@ fit.chrom <- RJaCGH(y=y, Pos=Pos, Chrom=Chrom, model="Chrom",
                     jump.parameters=jp)
 fit.genome <- list()
 for (i in 1:4) {
-fit.genome[[i]] <- RJaCGH(y=y, Pos=Pos, Chrom=Chrom, model="genome",
+fit.genome[[i]] <- RJaCGH(y=y, Pos=Pos, Chrom=Chrom, model="Genome",
 burnin=10, TOT=1000, jump.parameters=jp, k.max = 4)
 }
 
-\dontrun{gelman.brooks.plot(fit.genome)}
+\dontrun{gelman.rubin.plot(fit.genome)}
 ##If all R seem to be round 1
 \dontrun{fit.genome <- collapseChain(fit.genome)}
 }

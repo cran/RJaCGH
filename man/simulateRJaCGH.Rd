@@ -8,7 +8,7 @@ This function simulates observations from a hidden Markov model with
 normal distributed observations and non-homogeneous transition matrix.
 }
 \usage{
-simulateRJaCGH(n, x = NULL, mu, sigma.2, beta, start, q=-beta)
+simulateRJaCGH(n, x = NULL, mu, sigma.2, beta, start)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -22,10 +22,6 @@ simulateRJaCGH(n, x = NULL, mu, sigma.2, beta, start, q=-beta)
   matrix with the same size as the number of hidden states.}
   \item{start}{Starting states of the sequence. Must be an integer from
     1 to the number of hidden states.}
-  \item{q}{\code{q} parameter of the transition matrix. Must be a square
-    matrix with the same size as the number of hidden states. By
-    default, is \code{-beta}}
-
 }
 \details{
 Please note that in RJaCGH model, parameter \code{q} is taken as \code{-beta}

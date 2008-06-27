@@ -1,7 +1,7 @@
 \name{print.summary.RJaCGH}
 \alias{print.summary.RJaCGH}
 \alias{print.summary.RJaCGH.Chrom}
-\alias{print.summary.RJaCGH.genome}
+\alias{print.summary.RJaCGH.Genome}
 \alias{print.summary.RJaCGH.array}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{ print summary of RJaCGH fit}
@@ -11,15 +11,13 @@ The list stored in \code{\link{summary.RJaCGH}} is printed.
 \usage{
 \method{print}{summary.RJaCGH}(x, ...)
 \method{print}{summary.RJaCGH.Chrom}(x, ...)
-\method{print}{summary.RJaCGH.genome}(x, ...)
+\method{print}{summary.RJaCGH.Genome}(x, ...)
 \method{print}{summary.RJaCGH.array}(x, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{x}{a \code{\link{summary.RJaCGH}} object}
   \item{\ldots}{Additional arguments passed to \code{\link{print}}}
-}
-\details{
 }
 \value{
   The summary is printed
@@ -35,7 +33,7 @@ The list stored in \code{\link{summary.RJaCGH}} is printed.
 \seealso{\code{\link{RJaCGH}},
   \code{\link{states}}, \code{\link{model.averaging}},
   \code{\link{plot.RJaCGH}}, \code{\link{trace.plot}},
-  \code{\link{gelman.brooks.plot}}, \code{\link{collapseChain}}}
+  \code{\link{gelman.rubin.plot}}, \code{\link{collapseChain}}}
 
 \examples{
 y <- c(rnorm(100, 0, 1), rnorm(10, -3, 1), rnorm(20, 3, 1), rnorm(100,

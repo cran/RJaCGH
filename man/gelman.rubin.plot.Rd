@@ -1,18 +1,18 @@
-\name{gelman.brooks.plot}
-\alias{gelman.brooks.plot}
+\name{gelman.rubin.plot}
+\alias{gelman.rubin.plot}
 %- Also NEED an '\alias' for EACH other topic documented here.
-\title{gelman-brooks plot for 'RJaCGH' objects}
+\title{gelman-rubin plot for 'RJaCGH' objects}
 \description{
 A plot to show the convergence of several parallel chains, as described
-in Brooks and Gelman, 1998.
+in Rubin and Gelman, 1998.
 }
 \usage{
-gelman.brooks.plot(obj, bin = 1000, array = NULL, Chrom = NULL, k = NULL)
+gelman.rubin.plot(obj, bin = 1000, array = NULL, Chrom = NULL, k = NULL)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{obj}{a list containing several parallel chains; that is objects
-    of any of RJaCGH, RJaCGH.Chrom, RJaCGH.genome, RJaCGH.array classes
+    of any of RJaCGH, RJaCGH.Chrom, RJaCGH.Genome, RJaCGH.array classes
     (obviously, all of the same class).}
   \item{bin}{Number of observations taken in every subchain}
   \item{array}{if \code{obj} is 'RJaCGH.array', the name of the array to
@@ -30,7 +30,7 @@ gelman.brooks.plot(obj, bin = 1000, array = NULL, Chrom = NULL, k = NULL)
   chains. If the convergence diagnostics returned by it are
   satisfactory, then one can run \code{collapseChain} to join them all,
   but one can not collapse all the chains and later run
-  \code{gelman.brooks.plot} to recover the diagnostics, because the list
+  \code{gelman.rubin.plot} to recover the diagnostics, because the list
   of chains has been merged into one object.
   
 }
@@ -47,9 +47,9 @@ gelman.brooks.plot(obj, bin = 1000, array = NULL, Chrom = NULL, k = NULL)
   \item{sigma.2}{R values for the variances of the states}
   \item{beta}{R values for the beta parameters}
 }
-\references{Brooks, S.P. and Gelman, A. (1998). General Methods for
-  Monitoring convergence of iterative simulations. Journal of
-  Computational and Graphical Statistics. p434-455.
+\references{Gelman, A. and Rubin, D.(1992). Inference from
+  Iterative Simulation using Multiple Sequences. Statistical
+  Science, 7, 457--511
 
   
   Rueda OM, Diaz-Uriarte R.
@@ -76,11 +76,11 @@ jp <- list(sigma.tau.mu=rep(0.5, 4), sigma.tau.sigma.2=rep(0.3, 4),
 
 fit.genome <- list()
 for (i in 1:4) {
-fit.genome[[i]] <- RJaCGH(y=y, Pos=Pos, Chrom=Chrom, model="genome",
+fit.genome[[i]] <- RJaCGH(y=y, Pos=Pos, Chrom=Chrom, model="Genome",
 burnin=10, TOT=1000, jump.parameters=jp, k.max = 4)
 }
 
-\dontrun{gelman.brooks.plot(fit.genome)}
+\dontrun{gelman.rubin.plot(fit.genome)}
 }
 \keyword{models}% at least one, from doc/KEYWORDS
  

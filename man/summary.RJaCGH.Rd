@@ -1,20 +1,20 @@
 \name{summary.RJaCGH}
 \alias{summary.RJaCGH}
 \alias{summary.RJaCGH.Chrom}
-\alias{summary.RJaCGH.genome}
+\alias{summary.RJaCGH.Genome}
 \alias{summary.RJaCGH.array}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{Summarizing RJaCGH models}
 \description{
 'summary' method for objects of class 'RJaCGH', 'RJaCGH.Chrom',
-'RJaCGH.genome' and 'RJaCGH.array'.
+'RJaCGH.Genome' and 'RJaCGH.array'.
 }
 \usage{
 \method{summary}{RJaCGH}(object, k = NULL, point.estimator = "median",
 quantiles=NULL, \ldots)
 \method{summary}{RJaCGH.Chrom}(object, point.estimator="median",
 Chrom=NULL,quantiles=NULL,  \ldots)
-\method{summary}{RJaCGH.genome}(object, k=NULL,
+\method{summary}{RJaCGH.Genome}(object, k=NULL,
 point.estimator="median",
 quantiles=NULL, \ldots)
 \method{summary}{RJaCGH.array}(object, point.estimator="median",
@@ -22,7 +22,7 @@ quantiles=NULL, \ldots)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{object}{any of RJaCGH, RJaCGH.Chrom, RJaCGH.genome, RJaCGH.array objects}
+  \item{object}{any of RJaCGH, RJaCGH.Chrom, RJaCGH.Genome, RJaCGH.array objects}
   \item{k}{Model to summarize (i.e., number of hidden states). If NULL,
     the most visited is taken.}
   \item{point.estimator}{Type of point estimator for \code{mu},
@@ -59,7 +59,7 @@ density estimation through the function \code{\link{density}}
 \seealso{\code{\link{RJaCGH}},
   \code{\link{states}}, \code{\link{model.averaging}},
   \code{\link{plot.RJaCGH}}, \code{\link{trace.plot}},
-  \code{\link{gelman.brooks.plot}}, \code{\link{collapseChain}}}
+  \code{\link{gelman.rubin.plot}}, \code{\link{collapseChain}}}
 
 \examples{
 y <- c(rnorm(100, 0, 1), rnorm(10, -3, 1), rnorm(20, 3, 1), rnorm(100,

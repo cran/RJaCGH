@@ -1,27 +1,24 @@
-\name{print.pREC_S.RJaCGH.array}
-\alias{print.pREC_S.RJaCGH.array}
-\alias{print.pREC_S.RJaCGH.array.Chrom}
-\alias{print.pREC_S.RJaCGH.array.genome}
+\name{print.pREC_S}
+\alias{print.pREC_S}
+\alias{print.pREC_S.none}
+\alias{print.pREC_S.Chromosomes}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{ Method for printing probabilistic common regions}
 \description{
   A print method for \code{\link{pREC_S}} objects.
 }
 \usage{
-\method{print}{pREC_S.RJaCGH.array}(x,...)
-\method{print}{pREC_S.RJaCGH.array.Chrom}(x,...)
-\method{print}{pREC_S.RJaCGH.array.genome}(x,...)
+\method{print}{pREC_S}(x,...)
+\method{print}{pREC_S.Chromosomes}(x,...)
+\method{print}{pREC_S.none}(x,...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{x}{An object of class \code{\link{pREC_S.RJaCGH.array}},
-    \code{\link{pREC_S.RJaCGH.array.Chrom}} or
-      \code{\link{pREC_S.RJaCGH.array.genome}}.}
+  \item{x}{An object of class \code{\link{pREC_S}},
+    \code{pREC_S.Chromosomes} or
+      \code{pREC_S.none}.}
   \item{\dots}{Additional arguments passed to \code{\link{print}}.
     Currently ignored.}
-}
-\details{
-
 }
 \value{
   A data.frame is printed with as many rows as regions found and with columns

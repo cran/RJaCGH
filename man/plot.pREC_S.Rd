@@ -1,8 +1,5 @@
-\name{plot.pREC_S.RJaCGH.array}
+\name{plot.pREC_S}
 \alias{plot.pREC_S}
-\alias{plot.pREC_S.RJaCGH.array}
-\alias{plot.pREC_S.RJaCGH.array.Chrom}
-\alias{plot.pREC_S.RJaCGH.array.genome}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{ Plot number of probes shared by pairs of arrays }
 \description{
@@ -10,22 +7,13 @@
   group of arrays. 
 }
 \usage{
-\method{plot}{pREC_S.RJaCGH.array}(x, array.labels = NULL, col = NULL,
-breaks = NULL, stats = TRUE, dend=TRUE, method="single", \ldots)
-\method{plot}{pREC_S.RJaCGH.array.Chrom}(x, array.labels = NULL,
-Chrom = NULL, stats = TRUE, col = NULL,
-breaks = NULL, dend=TRUE, method="single", \ldots)
-\method{plot}{pREC_S.RJaCGH.array.genome}(x, array.labels = NULL,
-Chrom=NULL, stats = TRUE, col = NULL,
-breaks = NULL, dend=TRUE, method="single", \ldots)
-
-
+\method{plot}{pREC_S}(x, array.labels = NULL,  stats = TRUE, col = NULL,
+                      breaks = NULL, dend = TRUE, method = "single",
+                      Chrom = NULL, \ldots)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{x}{An object of class \code{\link{pREC_S.RJaCGH.array}},
-    \code{\link{pREC_S.RJaCGH.array.Chrom}} or
-    \code{\link{pREC_S.RJaCGH.array.genome}}}
+  \item{x}{An object of class \code{\link{pREC_S}}}
   \item{array.labels}{A vector for alternative labels for the arrays.}
   \item{Chrom}{Chromosome to plot. If \code{NULL}, all chromosomes
     are plotted.}
@@ -50,7 +38,7 @@ breaks = NULL, dend=TRUE, method="single", \ldots)
   \code{dend} is \code{TRUE}, a hierarchical clustering
   (method \code{method}) on arrays
   is performed based on the dissimilarity measure defined as:
-  $1 - (inc.mat / max(inc.mat)$ where \code{inc.mat} is the matrix with
+  $1 - (inc.mat / max(inc.mat))$ where \code{inc.mat} is the matrix with
   the number of arrays shared by every pair of arrays. Then a dendrogram
   is plotted and the arrays are reordered.
   The diagonals of the plot are turned off to improve the perception of
@@ -94,7 +82,7 @@ zz <- c(rnorm(90, 0, 1), rnorm(40, 3, 1),
        rnorm(100,0, 1)) 
 
 fit.array.genome <- RJaCGH(y=cbind(y,z,zz),
-Pos=Pos, Chrom=Chrom, model="genome",
+Pos=Pos, Chrom=Chrom, model="Genome",
 burnin=1000, TOT=1000, jump.parameters=jp, k.max = 4)
 Reg1 <- pREC_S(fit.array.genome, p=0.4, freq.array=2,
 alteration="Gain")

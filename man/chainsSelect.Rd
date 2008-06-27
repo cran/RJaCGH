@@ -2,7 +2,7 @@
 \alias{chainsSelect}
 \alias{chainsSelect.RJaCGH}
 \alias{chainsSelect.RJaCGH.Chrom}
-\alias{chainsSelect.RJaCGH.genome}
+\alias{chainsSelect.RJaCGH.Genome}
 \alias{chainsSelect.RJaCGH.array}
 
 %- Also NEED an '\alias' for EACH other topic documented here.
@@ -15,13 +15,13 @@
 chainsSelect(obj, nutrim=NULL, trim=NULL)
 \method{chainsSelect}{RJaCGH}(obj, nutrim=NULL, trim=NULL)
 \method{chainsSelect}{RJaCGH.Chrom}(obj, nutrim = NULL, trim = NULL)
-\method{chainsSelect}{RJaCGH.genome}(obj, nutrim = NULL, trim = NULL)
+\method{chainsSelect}{RJaCGH.Genome}(obj, nutrim = NULL, trim = NULL)
 \method{chainsSelect}{RJaCGH.array}(obj, nutrim = NULL, trim = NULL)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{obj}{a list containing several parallel chains; that is objects
-    of any of RJaCGH, RJaCGH.genome, RJaCGH.array classes
+    of any of RJaCGH, RJaCGH.Genome, RJaCGH.array classes
     (obviously, all of the same class).}
   \item{nutrim}{Number of chains to remove.}
   \item{trim}{Proportion of chains to remove. This or \code{nutrim}
@@ -30,10 +30,10 @@ chainsSelect(obj, nutrim=NULL, trim=NULL)
 \details{
   In Reversible Jump MCMC, there may be occasions in that a chain
   can get trapped in a model. If this happens, Gelman-brooks - 
-  see \code{\link{gelman.brooks.plot}} diagnostics
+  see \code{\link{gelman.rubin.plot}} diagnostics
   for \code{k}, the number of states is not defined. This method removes
   the chains whose k trajectories are most unusual compared to the rest.
-  After removing outlier chains, one can run \code{gelman.brooks.plot}
+  After removing outlier chains, one can run \code{gelman.rubin.plot}
   to check for convergnce of the remaining chains and later
   \code{collapseChain} to join them, or directly this last function.
 }
@@ -69,7 +69,7 @@ fit.chrom <- RJaCGH(y=y, Pos=Pos, Chrom=Chrom, model="Chrom",
                     jump.parameters=jp)
 fit.genome <- list()
 for (i in 1:4) {
-fit.genome[[i]] <- RJaCGH(y=y, Pos=Pos, Chrom=Chrom, model="genome",
+fit.genome[[i]] <- RJaCGH(y=y, Pos=Pos, Chrom=Chrom, model="Genome",
 burnin=10, TOT=1000, jump.parameters=jp, k.max = 4)
 }
 fit.genome <- chainsSelect(fit.genome, nutrim=1)

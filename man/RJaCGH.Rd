@@ -8,11 +8,13 @@ through bayesian methods and Reversible Jump Markov chain Montecarlo.
 }
 \usage{
 RJaCGH(y, Chrom = NULL, Start=NULL, End=NULL, Pos = NULL,
-Dist=NULL, probe.names=NULL, maxVar=NULL, model = "genome", var.equal=TRUE, 
-max.dist=NULL, normal.reference=0, normal.ref.percentile=0.95,
-burnin = 10000, TOT =10000, k.max = 6, stat = NULL, mu.alfa = NULL,
-mu.beta = NULL, prob.k = NULL, jump.parameters=list(),
-start.k = NULL, RJ=TRUE, auto.label=NULL)
+       Dist=NULL, probe.names=NULL, maxVar=NULL, model = "Genome",
+       var.equal=TRUE, max.dist=NULL, normal.reference=0,
+       window = NULL, burnin = 10000, TOT =10000,
+       k.max = 6, stat = NULL, mu.alfa = NULL, mu.beta = NULL,
+       s1=NULL, s2=NULL, init.mu=NULL, init.sigma.2=NULL, init.beta=NULL,
+       prob.k = NULL, jump.parameters=list(),
+       start.k = NULL, RJ=TRUE, NC = 1, deltaT = 2)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -32,7 +34,7 @@ start.k = NULL, RJ=TRUE, auto.label=NULL)
   \item{probe.names}{Character vector with the number of the probes.}
   \item{maxVar}{Maximum value for the variance of the states. If
     \code{NULL}, the range of the data is chosen.}
-  \item{model}{if \code{model}="genome", the same model is fitted for
+  \item{model}{if \code{model}="Genome", the same model is fitted for
     the whole genome. If \code{model}="Chrom", a different model is
     fitted for each chromosome.}
   \item{var.equal}{Logical. If \code{TRUE} the variances of the hidden
@@ -44,8 +46,11 @@ start.k = NULL, RJ=TRUE, auto.label=NULL)
     maximum \code{Dist} or maximum difference in \code{Pos} is taken.}
   \item{normal.reference}{The value considered as the mean of the normal
     state. See details. By default is \code{0}.}
-  \item{normal.ref.percentile}{Percentage for the relabelling of
-    states. See details. by default is 0.95.}
+  \item{window}{Multiplier of the standard deviation of the data to
+    determine the width of the normal state. See details. Default (window
+    = NULL) is 1.}
+%   \item{normal.ref.percentile}{Percentage for the relabelling of
+%     states. See details. by default is 0.95.}
   \item{burnin}{Number of burn-in iterations in the Markov Chain}
   \item{TOT}{Number of iterations after the burn-in}
   \item{k.max}{Maximum number of hidden states to fit.}
@@ -61,10 +66,21 @@ start.k = NULL, RJ=TRUE, auto.label=NULL)
     \code{prob.k} is chosen.}
   \item{RJ}{Logical. If \code{TRUE}, Reversible Jump is performed.
     If not, MCMC
-    over a fixed number of hidden states. Note that if \code{NULL}, most
-  of the methods for extracting information won't work.}
-  \item{auto.label}{If not \code{NULL}, should be the minimum proportion of
-  observations labeled as 'Normal'. See details.}
+    over a fixed number of hidden states. Note that if \code{FALSE}, most
+    of the methods for extracting information won't work.}
+  \item{s1}{Standard deviation for the creation of a new mean in the
+    birth move (first attempt). If \code{NULL}, it is the prior \code{mu.beta}.
+  }
+  \item{s2}{Standard deviation for the creation of a new mean in the
+    birth move (second attempt). If \code{NULL}, it is the prior \code{mu.beta}.}
+  \item{init.mu}{Starting values for \code{mu} for the chain. See details}
+  \item{init.sigma.2}{Starting values for \code{sigma.2} for the chain. See details}
+  \item{init.beta}{Starting values for \code{beta} for the chain. See details}
+  \item{NC}{Number of coupled parallel chains. See details}
+  \item{deltaT}{Heat parameter for tempering the parallel chains. See details}
+ 
+%   \item{auto.label}{If not \code{NULL}, should be the minimum proportion of
+%   observations labeled as 'Normal'. See details.}
 }
 \details{
   RJaCGH fits the following bayesian model: There is a priori
@@ -94,7 +110,16 @@ start.k = NULL, RJ=TRUE, auto.label=NULL)
 
   
   RJaCGH performs Markov Chain MonteCarlo with Reversible Jump to sample
-  for the posterior distribution. Every sweep has 3 steps:
+  for the posterior distribution.
+  \code{NC} sets the number of chains from we will sample in
+  parallel. Each of them is tempered in order to escape from local
+  maximum. The temper parameter is \code{deltaT}, and it can be
+  a value greater than $0$. each chain is tempered according to:
+
+  $ 1 / (1 + \code{deltaT} * \code{NC}) $
+  
+  Every sweep is performed for all chains and has 3 steps plus
+  another one common for all of them:
 
   
   1.- A Metropolis-Hastings move is used to update, for a fixed number
@@ -106,7 +131,10 @@ start.k = NULL, RJ=TRUE, auto.label=NULL)
   
   2.- A transdimensional move is chosen, between birth (a new hidden
   state is sampled from the prior) or death (an existing hidden state is
-  erased).
+  erased). Both moves are tried using delayed rejection. That is, if
+  the move is rejected, is given another try. The means for the new
+  state are drawn for the priors, but the standard deviation can be
+  set for the two stages with parameters \code{s1} and \code{s2}.
 
   
   3.- Another transdimensional move is performed; an split move (divide
@@ -115,6 +143,8 @@ start.k = NULL, RJ=TRUE, auto.label=NULL)
   with standard deviation \code{tau.split.mu} for the \code{mu} and
   \code{tau.split.beta} for \code{beta}.
 
+  4.- If \code{NC} is greater than 1, a swap move is tried to exchange
+  information from two of the coupled parallel chains.
   
   \code{jump.parameters} must be a list with the parameters for the
   moves. It must have components \code{sigma.tau.mu},
@@ -124,19 +154,30 @@ start.k = NULL, RJ=TRUE, auto.label=NULL)
   \code{get.jump()} is made to find 'good' values.
 
   A relabelling of hidden states is performed to match biological
-  states. The states that have the \code{normal.reference} value
-  inside a \code{normal.ref.percentile}\% probability interval
-  based on a normal distribution with means the median of \code{mu}
-  and sd the square root of the median of \code{sigma.2} are labelled as
-  'Normal'. If no state is close enough to \code{normal.reference} then
-  there will not be a normal state. Bear this in mind for
-  normalization issues.
-  If \code{auto.label} is not null, closest states to 'Normal' are also
-  labelled as 'Normal' until a proportion of \code{auto.label} is
-  reached. Please note that the default value is 0.60, so at least the
-  60\% of the observations will be labelled as 'Normal'.
-  If this laeblling is not satisfactory, you can relabel with
-  \code{\link{relabelStates}}.
+  states. See details in \code{\link{relabelStates}}.
+
+  
+  The initial values of the chain are drawn from an overdispersed
+  distribution. One can start the chain in a given point with
+  the parameters \code{start.k} (model to start from $1, \ldots,
+  \code{max.k}$) and the initial values \code{init.mu},
+  \code{init.sigma.2} (vectors of dimension \code{start.k}) and
+  \code{init.beta} (matrix of positive values with \code{start.k})
+  rows and \code{start.k}) columns. The diagonal must be zero.
+  
+%   The states that have the \code{normal.reference} value
+%   inside a \code{normal.ref.percentile}\% probability interval
+%   based on a normal distribution with means the median of \code{mu}
+%   and sd the square root of the median of \code{sigma.2} are labelled as
+%   'Normal'. If no state is close enough to \code{normal.reference} then
+%   there will not be a normal state. Bear this in mind for
+%   normalization issues.
+%   If \code{auto.label} is not null, closest states to 'Normal' are also
+%   labelled as 'Normal' until a proportion of \code{auto.label} is
+%   reached. Please note that the default value is 0.60, so at least the
+%   60\% of the observations will be labelled as 'Normal'.
+%   If this laeblling is not satisfactory, you can relabel with
+%   \code{\link{relabelStates}}.
     
 }
 \value{
@@ -147,41 +188,49 @@ start.k = NULL, RJ=TRUE, auto.label=NULL)
   \item{[[]]}{A list with an object of corresponding class (see below) for
     every array.}
   \item{array.names}{Vector with the names of the arrays.}
-  If \code{model} is "genome", an object of class \code{RJaCGH.genome}
+  If \code{model} is "Genome", an object of class \code{RJaCGH.Genome}
   is returned, with components:
   \item{[[]]}{a list with as many objects as k.max, with the fits.}
   \item{k}{sequence of number of hidden states sampled.}
-  \item{prob.b}{Number of birth moves performed (Includes burn-in.}
-  \item{prob.d}{Number of death moves performed (Includes burn-in.}
+  \item{prob.b}{Number of birth moves performed in first and second
+    proposal.(Includes burn-in.}
+  \item{prob.d}{Number of death moves performed in first and second
+    proposal.(Includes burn-in.}
   \item{prob.s}{Number of split moves performed (Includes burn-in.}
   \item{prob.c}{Number of combine moves performed (Includes burn-in.}
+  \item{prob.e}{Number of exchange (swap) moves performed between
+    tempered chains and with cool (main) chain.}
   \item{y}{y vector.}
   \item{Pos}{Pos vector.}
   \item{model}{model.}
   \item{Chrom}{Chromosome vector.}
   \item{x}{x vector of distances between genes.}
+  \item{viterbi}{A list with as many components as chromosomes. For each
+  chromosome, a list, with at least three components: gzipped\_sequence:
+  the compacted and gzipped sequence of states; num\_sequences: the
+  number of sequences in that compacted set of sequences;
+  sum\_mcmc\_iter: the number of times a viterbi sequence was
+  obtained. All these are only of use for calls to the pREC funcitons
+  (\code{\link{pREC_A}} and \code{\link{pREC_S}}).}
+
   If \code{model} is "Chrom", an object of class \code{RJaCGH.Chrom} is
-  returned, with the following components:
-  \item{[[]]}{a list with as many components as chromosomes, of class
-    \code{RJaCGH} (See below).}
-  \item{Pos}{Pos vector.}
-  \item{Start}{Start positions.}
-  \item{End}{End positions.}
-  \item{probe.names}{Names of the probes.}
-  \item{model}{model.}
-  \item{Chrom}{Chromosome vector.}
-  
-  If no \code{model} was specified and no \code{Chrom} was given, an
-  object of class \code{RJaCGH} is returned, with components \code{k},
-  \code{prob.b}, \code{prob.d}, \code{prob.s}, \code{prob.c}, \code{y},
-  \code{Pos}, \code{x} as described before, plus a list with as many
-  components of number of max hidden states fitted.
-  The length of \code{k} equals aproximately $2$ times \code{TOT},
-  because in every sweep of the algorithm there are two tries to jump
-  between models, so two times to explore the probability of the number
-  of hidden states.
-  For every hidden markov model fitted, a list is returned with
-  components:
+  returned, with the following components: \item{[[]]}{a list with as
+  many components as chromosomes, of class \code{RJaCGH} (See below).}
+  \item{Pos}{Pos vector.}  \item{Start}{Start positions.}
+  \item{End}{End positions.}  \item{probe.names}{Names of the probes.}
+  \item{model}{model.}  \item{Chrom}{Chromosome vector.}
+  \item{viterbi}{Identical structure as above.}  If no \code{model} was
+  specified and no \code{Chrom} was given, an object of class
+  \code{RJaCGH} is returned, with components \code{k}, \code{prob.b},
+  \code{prob.d}, \code{prob.s}, \code{prob.c}, \code{y}, \code{Pos},
+  \code{x}, \code{viterbi} (but as there are no chroms, viterbi has a
+  one component list ---analogous to having a single chromosome), as
+  described before, plus a list with as many components of number of max
+  hidden states fitted.  The length of \code{k} equals aproximately $2$
+  times \code{TOT}, because in every sweep of the algorithm there are
+  two tries to jump between models, so two times to explore the
+  probability of the number of hidden states.  For every hidden markov
+  model fitted, a list is returned with components:
   
   \item{mu}{a matrix with the means sampled}
   \item{sigma.2}{a matrix with the variances sampled}
@@ -219,13 +268,20 @@ start.k = NULL, RJ=TRUE, auto.label=NULL)
   Green, P.J. (1995) Reversible Jump Markov Chain Monte Carlo
   computation and Bayesian model determination. Biometrika, 82,
   711-732.
+
+  Green, P.J. and Antonietta, M. (2001) Delayed Rejection in Reversible
+  Jump Metropolis Hastings. Biometrika, 88 (4), 1035-1053.
+
+  Geyer, C. J. (1991). Markov Chain Monte Carlo Maximum Likelihood.
+  Proceedings of the 23th Symposium on the Interface, 156-163.
+  
 }
 \author{Oscar M. Rueda and Ramon Diaz Uriarte}
 
 \seealso{\code{\link{summary.RJaCGH}},
   \code{\link{states}}, \code{\link{model.averaging}},
   \code{\link{plot.RJaCGH}}, \code{\link{trace.plot}},
-  \code{\link{gelman.brooks.plot}}, \code{\link{collapseChain}},
+  \code{\link{gelman.rubin.plot}}, \code{\link{collapseChain}},
   \code{\link{relabelStates}}, \code{\link{pREC_A}},
   \code{\link{pREC_S}}
 }
@@ -245,7 +301,7 @@ fit.chrom <- RJaCGH(y=y, Pos=Pos, Chrom=Chrom, model="Chrom",
                     jump.parameters=jp)
 ##RJ results for chromosome 5
 table(fit.chrom[[5]]$k)
-fit.genome <- RJaCGH(y=y, Pos=Pos, Chrom=Chrom, model="genome",
+fit.genome <- RJaCGH(y=y, Pos=Pos, Chrom=Chrom, model="Genome",
 burnin=100, TOT=1000, jump.parameters=jp, k.max = 4)
 ## Results for the model with 3 states:
 apply(fit.genome[[3]]$mu, 2, summary)

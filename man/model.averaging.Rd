@@ -2,7 +2,7 @@
 \alias{model.averaging}
 \alias{model.averaging.RJaCGH}
 \alias{model.averaging.RJaCGH.Chrom}
-\alias{model.averaging.RJaCGH.genome}
+\alias{model.averaging.RJaCGH.Genome}
 \alias{model.averaging.RJaCGH.array}
 
 %- Also NEED an '\alias' for EACH other topic documented here.
@@ -14,7 +14,7 @@ Bayesian model averaging for the estimation of hidden state sequence.
 model.averaging(obj)
 \method{model.averaging}{RJaCGH}(obj)
 \method{model.averaging}{RJaCGH.Chrom}(obj)
-\method{model.averaging}{RJaCGH.genome}(obj)
+\method{model.averaging}{RJaCGH.Genome}(obj)
 \method{model.averaging}{RJaCGH.array}(obj)
 
 }
@@ -49,7 +49,7 @@ model.averaging(obj)
 \seealso{\code{\link{RJaCGH}},
   \code{\link{summary.RJaCGH}}, \code{\link{states}},
   \code{\link{plot.RJaCGH}}, \code{\link{trace.plot}},
-  \code{\link{gelman.brooks.plot}}, \code{\link{collapseChain}}}
+  \code{\link{gelman.rubin.plot}}, \code{\link{collapseChain}}}
 
 \examples{
 \dontrun{y <- c(rnorm(100, 0, 1), rnorm(10, -3, 1), rnorm(20, 3, 1),
@@ -60,7 +60,7 @@ Chrom <- rep(1:23, rep(10, 23))
 
 jp <- list(sigma.tau.mu=rep(0.5, 5), sigma.tau.sigma.2=rep(0.3, 5),
 sigma.tau.beta=rep(0.7, 5), tau.split.mu=0.5, tau.split.beta=0.5)
-fit.genome <- RJaCGH(y=y, Pos=Pos, Chrom=Chrom, model="genome",
+fit.genome <- RJaCGH(y=y, Pos=Pos, Chrom=Chrom, model="Genome",
 burnin=1000, TOT=10000, jump.parameters=jp, max.k=5)
 mo <- model.averaging(fit.genome)
 print(mo)}

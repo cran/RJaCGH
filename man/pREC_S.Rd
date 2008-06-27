@@ -1,9 +1,9 @@
 \name{pREC_S}
 \alias{pREC_S}
-\alias{pREC_S.RJaCGH}
-\alias{pREC_S.RJaCGH.array}
-\alias{pREC_S.RJaCGH.array.Chrom}
-\alias{pREC_S.RJaCGH.array.genome}
+% \alias{pREC_S.RJaCGH}
+% \alias{pREC_S.RJaCGH.array}
+% \alias{pREC_S.RJaCGH.array.Chrom}
+% \alias{pREC_S.RJaCGH.array.genome}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{ Subgroups of arrays that share common alterations }
 \description{
@@ -12,8 +12,10 @@
   probability threshold.
 }
 \usage{
-pREC_S(obj, p, freq.array, alteration = "Gain")
-\method{pREC_S}{RJaCGH.array}(obj, p, freq.array, alteration = "Gain")
+pREC_S(obj, p, freq.array, alteration = "Gain",
+       force.write.files = FALSE, verbose = FALSE,
+       delete.rewritten = TRUE)
+
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -23,6 +25,15 @@ pREC_S(obj, p, freq.array, alteration = "Gain")
   \item{freq.array}{ Minimum number of arrays that share every
     region.}
   \item{alteration}{ Either 'Gain' or 'Loss'. }
+    \item{force.write.files}{If TRUE, the gzipped files with the Viterbi
+    sequence are written to disk even if they are, supposedly, already
+    there. }
+  \item{verbose}{If TRUE provide more details on what is being done, including
+    intermediate output from the C functions themselves. Only helpful
+    for debugging or if you are bored; this will often write more output than
+    you want.}
+  \item{delete.rewritten}{If TRUE, delete the files with the Viterbi
+    sequence from disk.}
 }
 \details{
   This algorithm, as \code{\link{pREC_A}}  computes
@@ -38,11 +49,41 @@ pREC_S(obj, p, freq.array, alteration = "Gain")
   probability of alteration of all of them doesn't have to be over the
   probability threshold; in other words \code{p} is computed for every
   region, not for all the sequence of regions.
+
+    Writing the files with the Vitterbi sequence to disk will be done by
+  default if RJaCGH was run with the default "delete\_gzipped = TRUE"
+  (which will happen if the global flag ".\_\_DELETE\_GZIPPED" is TRUE). To
+  preserve disk space, as soon as the gzipped files are read into R (and
+  incorporated into the RJaCGH object), by default they are deleted from
+  disk. Sometimes, however, you might want not to delete them from disk;
+  for instance, if you will continue working from this directory, and
+  you want to save some CPU time. If the files exist in the directory
+  when you call pREC there is no need to write them from R to disk,
+  which allows you to save the time in the "writeBin" calls inside
+  pREC. In this case, you would run RJaCGH with "delete\_gzipped =
+  FALSE". Now, if for some reason those files are no longer available
+  (you move directories, you delete them, etc), you should set
+  "force.write.files = TRUE" (pREC will let you know if you need to do
+  so).
+  
+  delete.rewritten helps prevent cluttering the disk. Files with the
+  Viterbi sequence will be written to disk, read by C, and then
+  deleted. Again, no information is lost, since the sequences are stored
+  as part of the RJaCGH object. Note, however, that if you run RJaCGH
+  with ".\_\_DELETE\_GZIPPED <- FALSE" this option has no effect, because
+  it is implicit that you wanted, from the start, to preserve the
+  files. In other words, "delete.rewritten" only has any effect if you
+  either used "force.write.files = TRUE" or if you originally run RJaCGH
+  without preserving the files in disk.
+  
+
 }
 \value{
-  An object of class \code{pREC_S.RJaCGH.array},
-  \code{pREC_S.RJaCGH.array.Chrom} or
-  \code{pREC_S.RJaCGH.array.genome}, as corresponding.
+  An object of class \code{pREC_S.none}, or \code{pREC_S.Chromosomes}
+  depending on whether or not the original RJaCGH had, or not, a
+  Chromosomes component (the later only when the original object was of
+  neither "RJaCGH.Chrom" or "RJaCGH.Genome").
+  
   They are lists with a sublist for every region encountered and
   elements:
   \item{start}{Start position of the region.}
@@ -64,30 +105,25 @@ pREC_S(obj, p, freq.array, alteration = "Gain")
 \author{Oscar M. Rueda and Ramon Diaz Uriarte}
   
 \note{
-  This is a preliminary method, so it can be slow.
-  This class supersedes the class \code{pMCR2}. Objects created with
-  function \code{pMCR2} in older versions of RJaCGH can be converted into
-  the new one in order to print them, or plot them.
-  Two steps must be performed:
-  1.-Change the class apropriately; if for example \code{obj} has
-  class 'pMCR2.RJaCGH.array'  make
-  \code{class(obj) <- 'pREC_S.RJaCGH.array'}
-  2.-If \code{obj} has information about chromosomes, run
-  \code{names(obj) <- 1:length(obj)}
+  There have been major changes in how pREC is implemented. For details,
+  see "Implementing\_pREC\_in\_C.pdf".
 }
 \seealso{\code{\link{RJaCGH}},
   \code{\link{states}}, \code{\link{model.averaging}},
-  \code{\link{print.pREC_S.RJaCGH.array}}
-  \code{\link{plot.pREC_S.RJaCGH.array}}
-  \code{\link{getSequence}}
-  \code{\link{prob.seq}}
+   \code{\link{print.pREC_S}}
+  \code{\link{plot.pREC_S}}
   \code{\link{pREC_A}}
 }
 \examples{
-\dontrun{
+% \dontrun{
 ## MCR for a single array:
 y <- c(rnorm(100, 0, 1), rnorm(10, -3, 1), rnorm(20, 3, 1),
        rnorm(100,0, 1)) 
+z <- c(rnorm(110, 0, 1), rnorm(20, 3, 1),
+       rnorm(100,0, 1)) 
+zz <- c(rnorm(90, 0, 1), rnorm(40, 3, 1),
+       rnorm(100,0, 1)) 
+
 Pos <- sample(x=1:500, size=230, replace=TRUE)
 Pos <- cumsum(Pos)
 Chrom <- rep(1:23, rep(10, 23))
@@ -95,21 +131,13 @@ Chrom <- rep(1:23, rep(10, 23))
 jp <- list(sigma.tau.mu=rep(0.05, 4), sigma.tau.sigma.2=rep(0.03, 4),
            sigma.tau.beta=rep(0.07, 4), tau.split.mu=0.1, tau.split.beta=0.1)
 
-fit.genome <- RJaCGH(y=y, Pos=Pos, Chrom=Chrom, model="genome",
-burnin=1000, TOT=1000, jump.parameters=jp, k.max = 4)
-
-z <- c(rnorm(110, 0, 1), rnorm(20, 3, 1),
-       rnorm(100,0, 1)) 
-zz <- c(rnorm(90, 0, 1), rnorm(40, 3, 1),
-       rnorm(100,0, 1)) 
-
 fit.array.genome <- RJaCGH(y=cbind(y,z,zz),
-Pos=Pos, Chrom=Chrom, model="genome",
+Pos=Pos, Chrom=Chrom, model="Genome",
 burnin=1000, TOT=1000, jump.parameters=jp, k.max = 4)
 pREC_S(fit.array.genome, p=0.4, freq.array=2,
 alteration="Gain")
 pREC_S(fit.array.genome, p=0.4, freq.array=2, alteration="Loss")
-}
+% }
 }
 \keyword{models}% at least one, from doc/KEYWORDS
 

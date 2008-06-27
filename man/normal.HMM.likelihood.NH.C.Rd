@@ -8,8 +8,7 @@ Markov model with normal distributed emissions and a non-homogeneous
 transition matrix as computed by Q.NH.
 }
 \usage{
-normal.HMM.likelihood.NH.C(y, x, mu, sigma.2, beta, stat = NULL,
-q=-beta)
+normal.HMM.likelihood.NH.C(y, x, mu, sigma.2, beta, stat = NULL)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -20,8 +19,8 @@ q=-beta)
   \item{beta}{\code{beta} in transition matrix}
   \item{stat}{Vector of initial probabilities. If NULL, a uniforma
     distribution is assumed.}
-  \item{q}{\code{q} parameter in transition matrix. In RJaCGH model,
-    \code{q}=\code{-beta}}
+%   \item{q}{\code{q} parameter in transition matrix. In RJaCGH model,
+%     \code{q}=\code{-beta}}
 }
 \details{
 This function is just an interface for the C routine to compute

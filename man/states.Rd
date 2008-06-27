@@ -2,7 +2,7 @@
 \alias{states}
 \alias{states.RJaCGH}
 \alias{states.RJaCGH.Chrom}
-\alias{states.RJaCGH.genome}
+\alias{states.RJaCGH.Genome}
 \alias{states.RJaCGH.array}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{'states' method for RJaCGH objects}
@@ -13,13 +13,13 @@ Methods for estimating the hidden state sequence of a RJaCGH model.
 states(obj, k)
 \method{states}{RJaCGH}(obj, k=NULL)
 \method{states}{RJaCGH.Chrom}(obj, k=NULL)
-\method{states}{RJaCGH.genome}(obj, k=NULL)
+\method{states}{RJaCGH.Genome}(obj, k=NULL)
 \method{states}{RJaCGH.array}(obj, k=NULL)
 
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{obj}{any of RJaCGH, RJaCGH.Chrom, RJaCGH.genome, RJaCGH.array objects}
+  \item{obj}{any of RJaCGH, RJaCGH.Chrom, RJaCGH.Genome, RJaCGH.array objects}
   \item{k}{Model to summarize (i.e., number of hidden states). If NULL,
     the most visited is taken.}
 }
@@ -53,7 +53,7 @@ sublists, as in \code{\link{RJaCGH}}.
   \seealso{\code{\link{RJaCGH}},
   \code{\link{summary.RJaCGH}}, \code{\link{model.averaging}},
   \code{\link{plot.RJaCGH}}, \code{\link{trace.plot}},
-  \code{\link{gelman.brooks.plot}}, \code{\link{collapseChain}}}
+  \code{\link{gelman.rubin.plot}}, \code{\link{collapseChain}}}
 
 \examples{
 \dontrun{y <- c(rnorm(100, 0, 1), rnorm(10, -3, 1), rnorm(20, 3, 1), rnorm(100,
@@ -63,7 +63,7 @@ Pos <- cumsum(Pos)
 Chrom <- rep(1:23, rep(10, 23))
 jp <- list(sigma.tau.mu=rep(0.05, 4), sigma.tau.sigma.2=rep(0.03, 4),
            sigma.tau.beta=rep(0.07, 4), tau.split.mu=0.1, tau.split.beta=0.1)
-fit.genome <- RJaCGH(y=y, Pos=Pos, Chrom=Chrom, model="genome",
+fit.genome <- RJaCGH(y=y, Pos=Pos, Chrom=Chrom, model="Genome",
 burnin=100, TOT=1000, jump.parameters=jp, k.max = 4)
 states(fit.genome)}
 }

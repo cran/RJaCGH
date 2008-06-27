@@ -10,7 +10,7 @@ trace.plot(obj, k = NULL, array = NULL, Chrom = NULL, main.text = NULL)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{obj}{any of RJaCGH, RJaCGH.Chrom, RJaCGH.genome, RJaCGH.array objects}
+  \item{obj}{any of RJaCGH, RJaCGH.Chrom, RJaCGH.Genome, RJaCGH.array objects}
   \item{k}{Model to plot (i.e., number of hidden states). If NULL,
     the most visited is taken.}
   \item{array}{if \code{obj} is 'RJaCGH.array', the name of the array to
@@ -38,7 +38,7 @@ The colors does not correspond to any particular level of gain/loss.
 \seealso{\code{\link{RJaCGH}},
   \code{\link{summary.RJaCGH}}, \code{\link{model.averaging}},
   \code{\link{plot.RJaCGH}}, \code{\link{states}},
-  \code{\link{gelman.brooks.plot}}, \code{\link{collapseChain}}}
+  \code{\link{gelman.rubin.plot}}, \code{\link{collapseChain}}}
 
 \examples{
 y <- c(rnorm(100, 0, 1), rnorm(10, -3, 1), rnorm(20, 3, 1), rnorm(100,
@@ -48,7 +48,7 @@ Pos <- cumsum(Pos)
 Chrom <- rep(1:23, rep(10, 23))
 jp <- list(sigma.tau.mu=rep(0.5, 5), sigma.tau.sigma.2=rep(0.3, 5),
 sigma.tau.beta=rep(0.7, 5), tau.split.mu=0.5, tau.split.beta=0.5)
-fit.genome <- RJaCGH(y=y, Pos=Pos, Chrom=Chrom, model="genome",
+fit.genome <- RJaCGH(y=y, Pos=Pos, Chrom=Chrom, model="Genome",
 burnin=10, TOT=100, jump.parameters=jp, k.max = 5)
 trace.plot(fit.genome)
 }

@@ -11,7 +11,7 @@ genome.plot(obj, col = NULL, breakpoints = NULL, legend.pos=NULL,...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{obj}{ An object of class RJaCGH.Chrom, RJaCGH.genome or RJaCGH.array. }
+  \item{obj}{ An object of class RJaCGH.Chrom, RJaCGH.Genome or RJaCGH.array. }
   \item{col}{ A vector of length \texttt{k} for the color of every range
     of probabilities of alteration, starting from loss to gain. }
   \item{breakpoints}{ A vector of length \texttt{k-1} for the
@@ -49,7 +49,7 @@ Chrom <- gm13330$Chromosome[!is.na(gm13330$LogRatio)]
 
 jp <- list(sigma.tau.mu=rep(0.05, 4), sigma.tau.sigma.2=rep(0.03, 4),
            sigma.tau.beta=rep(0.07, 4), tau.split.mu=0.1, tau.split.beta=0.1)
-fit.genome <- RJaCGH(y=y, Pos=Pos, Chrom=Chrom, model="genome",
+fit.genome <- RJaCGH(y=y, Pos=Pos, Chrom=Chrom, model="Genome",
 burnin=1000, TOT=1000, jump.parameters=jp, k.max = 4)
 genome.plot(fit.genome)
 genome.plot(fit.genome, col=c(3, 1, 2), breakpoints=c(-0.5, 0.5))
