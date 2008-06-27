@@ -1,3 +1,6 @@
+1.5.4	2008-07-07    Fixed lengthy output and examples and details in
+		      DESCRIPTION.
+
 1.5.3	2008-05-22    Changes in both pREC algorithms.
 		      gelman.brooks.plot is now gelman.rubin.plot
 

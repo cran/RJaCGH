@@ -1104,10 +1104,10 @@ void Birth(double *y, double *x, int *varEqual, int *genome, int *index,
     
     for (k=0; k < *genome; ++k) {
       nn = index[k+1] - index[k];
-      P1(1098);
+      //P1(1098);
       double *yy; yy = Calloc(nn, double);
       double *xx; xx = Calloc(nn, double);
-      P2(1098);
+      //P2(1098);
      
       for (j=0; j < nn-1; ++j) {
 	yy[j] = y[j + index[k]];
@@ -1176,10 +1176,10 @@ void Birth(double *y, double *x, int *varEqual, int *genome, int *index,
       probBirth2 = probBirth2 - dnorm(candidatoMu2[*r], *muAlfa, *muBeta, 1);
       for (k=0; k < *genome; ++k) {
 	nn = index[k+1] - index[k];
-	P1(1170);
+	//P1(1170);
 	double *yy; yy = Calloc(nn, double);
 	double *xx; xx = Calloc(nn, double);
-	P2(1170);
+	//P2(1170);
 	
 	for (j=0; j < nn-1; ++j) {
 	  yy[j] = y[j + index[k]];
@@ -1323,10 +1323,10 @@ void Death(double *y, double *x, int *genome, int *index, double *mu, double *si
   probDeath = probDeath + log(probK[*r-2]) - log(probK[*r-1]);
   for (k=0; k < *genome; ++k) {
     nn = index[k+1] - index[k];
-    P1(1316);
+    //P1(1316);
     double *yy; yy = Calloc(nn, double);
     double *xx; xx = Calloc(nn, double);
-    P2(1316);
+    //P2(1316);
     for (j=0; j < nn-1; ++j) {
       yy[j] = y[j + index[k]];
       xx[j] = x[j + index[k]];
@@ -1426,10 +1426,10 @@ void Death(double *y, double *x, int *genome, int *index, double *mu, double *si
     probDeath2 = probDeath2 - dnorm(u2b, *muAlfa, *s1, 1);
     for (k=0; k < *genome; ++k) {
       nn = index[k+1] - index[k];
-      P1(1417);
+      //P1(1417);
       double *yy; yy = Calloc(nn, double);
       double *xx; xx = Calloc(nn, double);
-      P2(1417);
+      //P2(1417);
       for (j=0; j < nn-1; ++j) {
 	yy[j] = y[j + index[k]];
 	xx[j] = x[j + index[k]];
@@ -1644,10 +1644,10 @@ void Split(double *y, double *x, int *varEqual, int *genome, int *index,
     }
     for (k=0; k < *genome; ++k) {
       nn = index[k+1] - index[k];
-      P1(1633);
+      //P1(1633);
       double *yy; yy = Calloc(nn, double);
       double *xx; xx = Calloc(nn, double);
-      P2(1633);
+      //P2(1633);
       for (j=0; j < nn-1; ++j) {
 	yy[j] = y[j + index[k]];
 	xx[j] = x[j + index[k]];
@@ -1906,10 +1906,10 @@ void Combine(double *y, double *x, int *varEqual, int *genome, int *index,
     }
     for (k=0; k < *genome; ++k) {
       nn = index[k+1] - index[k];
-      P1(1893);
+      //P1(1893);
       double *yy; yy = Calloc(nn, double);
       double *xx; xx = Calloc(nn, double);
-      P2(1893);
+      //P2(1893);
       for (j=0; j < nn-1; ++j) {
 	yy[j] = y[j + index[k]];
 	xx[j] = x[j + index[k]];
@@ -2133,10 +2133,10 @@ void MetropolisUpdate(double *y, double *x, int *varEqual,
 
   for (k=0; k < *genome; ++k) {
     nn = index[k+1] - index[k];
-    P1(2119);
+    //P1(2119);
     double *yy; yy = Calloc(nn, double);
     double *xx; xx = Calloc(nn, double);
-    P2(2119);
+    //P2(2119);
     for (j=0; j < nn-1; ++j) {
       yy[j] = y[j + index[k]];
       xx[j] = x[j + index[k]];
@@ -2194,10 +2194,10 @@ void MetropolisUpdate(double *y, double *x, int *varEqual,
     }
     for (k=0; k < *genome; ++k) {
       nn = index[k+1] - index[k];
-      P1(2177);
+      //P1(2177);
       double *yy; yy = Calloc(nn, double);
       double *xx; xx = Calloc(nn, double);
-      P2(2177);
+      //P2(2177);
       for (j=0; j < nn-1; ++j) {
 	yy[j] = y[j + index[k]];
 	xx[j] = x[j + index[k]];
@@ -2248,10 +2248,10 @@ void MetropolisUpdate(double *y, double *x, int *varEqual,
     }
     for (k=0; k < *genome; ++k) {
       nn = index[k+1] - index[k];
-      P1(2229);
+      //P1(2229);
       double *yy; yy = Calloc(nn, double);
       double *xx; xx = Calloc(nn, double);
-      P2(2229);
+      //P2(2229);
       for (j=0; j < nn-1; ++j) {
 	yy[j] = y[j + index[k]];
 	xx[j] = x[j + index[k]];
@@ -2872,10 +2872,10 @@ void doBurnin(double *y, double *x, int *varEqual, int *genome,
       }
       for (m=0; m < *genome; ++m) {
 	nn = index[m+1] - index[m];
-	P1(2851);
+	//P1(2851);
 	double *yy; yy = Calloc(nn, double);
 	double *xx; xx = Calloc(nn, double);
-	P2(2851);
+	//P2(2851);
 	/*  Initialization */
 	for (j=0; j < nn-1; ++j) {
 	  yy[j] = -9999;
@@ -3250,24 +3250,24 @@ void MetropolisSweep(double *y, double *x, int *varEqual, int *genome,
   PR(dummy_random_number);
 #endif
 
-  Rprintf("\n  +++++++ ENTERING MetropolisSweep in C +++++++ \n");
+  //  Rprintf("\n  +++++++ ENTERING MetropolisSweep in C +++++++ \n");
   /* Coupled parallel chains */
   double *muCoupled; muCoupled = Calloc(*NC * *kMax * (*kMax+1) / 2, double);
   double *sigma2Coupled; sigma2Coupled = Calloc(*NC * *kMax * (*kMax+1) / 2, double);
   double *betaCoupled; betaCoupled = Calloc(*NC * *kMax * (*kMax+1) * (2* *kMax+1) / 6, 
 					    double);
-  Rprintf("\n    ++++++++++ allocation 1 done +++++++\n");
+  //  Rprintf("\n    ++++++++++ allocation 1 done +++++++\n");
   
   int nc;
   double *loglikLastCoupled; loglikLastCoupled = Calloc(*NC * *kMax, double);
   double *OldStatCoupled; OldStatCoupled = Calloc(*kMax, double);
   double *OldMuCoupled; OldMuCoupled = Calloc(*kMax, double);
-  Rprintf("\n    ++++++++++ allocation 2 done +++++++\n");
+  //  Rprintf("\n    ++++++++++ allocation 2 done +++++++\n");
 
   double *OldSigma2Coupled; OldSigma2Coupled = Calloc(*kMax, double);
   double *OldBetaCoupled; OldBetaCoupled = Calloc(*kMax * *kMax, double);
   double *qCoupled; qCoupled = Calloc(*kMax * *kMax, double);
-  Rprintf("\n    ++++++++++ allocation 3 done +++++++\n");
+  //  Rprintf("\n    ++++++++++ allocation 3 done +++++++\n");
 
   int *rCoupled; rCoupled = Calloc(*NC, int);
   double *heat; heat=Calloc(*NC, double);
@@ -3276,7 +3276,7 @@ void MetropolisSweep(double *y, double *x, int *varEqual, int *genome,
   }
   /* End variables for coupled parallel chains */
 
-    Rprintf("\n    ++++++++++ allocation 4 done +++++++\n");
+  //    Rprintf("\n    ++++++++++ allocation 4 done +++++++\n");
 
   int i,j,m;
   int t;
@@ -3284,7 +3284,7 @@ void MetropolisSweep(double *y, double *x, int *varEqual, int *genome,
   int *accepted; accepted = Calloc(1, int);
   int *triedChangeDim; triedChangeDim = Calloc(1, int);
   int mainAccepted = 0;
-  Rprintf("\n    ++++++++++ allocation 5 done +++++++\n");
+  //  Rprintf("\n    ++++++++++ allocation 5 done +++++++\n");
 
   /* index to permutations */
   int *indexPerm; indexPerm = Calloc(*kMax, int);
@@ -3294,20 +3294,20 @@ void MetropolisSweep(double *y, double *x, int *varEqual, int *genome,
   int *indexStat; indexStat = Calloc(*kMax, int);
   /* new parameters (max limit) */
 
-    Rprintf("\n    ++++++++++ allocation 6 done +++++++\n");
+  //    Rprintf("\n    ++++++++++ allocation 6 done +++++++\n");
 
   double *NewStatCoupled; NewStatCoupled = Calloc(*kMax, double);
   double *NewMuCoupled; NewMuCoupled = Calloc(*kMax, double);
   double *NewSigma2Coupled; NewSigma2Coupled = Calloc(*kMax, double);
   double *NewBetaCoupled; NewBetaCoupled = Calloc(*kMax * *kMax, double);
-  Rprintf("\n    ++++++++++ allocation 7 done +++++++\n");
+  //  Rprintf("\n    ++++++++++ allocation 7 done +++++++\n");
 
   double *q; q = Calloc(*kMax * *kMax, double);
 
   unsigned int *viterbi_counts; 
   viterbi_counts = (unsigned int *) R_alloc(*kMax, sizeof(unsigned int));
   for(int dd = 0; dd < (*kMax); dd++) viterbi_counts[dd] = 0;
-  Rprintf("\n    ++++++++++ allocation 8 done +++++++\n");
+  //  Rprintf("\n    ++++++++++ allocation 8 done +++++++\n");
 
   unsigned int k_sum[(*kMax)];
   unsigned int Total_k; 

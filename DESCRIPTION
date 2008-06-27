@@ -1,5 +1,5 @@
 Package: RJaCGH
-Version: 1.5.3
+Version: 1.5.4
 Date: 2008-06-27
 Title: Reversible Jump MCMC for the analysis of CGH arrays.
 Author: Oscar Rueda <omrueda@cnio.es> and Ramon Diaz-Uriarte
@@ -13,7 +13,7 @@ Description: Bayesian analysis of CGH microarrays fitting Hidden Markov Chain mo
              computed by Reversible Jump Markov Chain Monte Carlo Methods. Also
 	     returns probabilistic common regions for gains/losses.
 LazyLoad: Yes
-License: GPL (>=2). For zlib 1.2.3. please see src/README.
+License: GPL-3
 URL: http://www.r-project.org
 biocViews: Microarray, DNACopyNumber
-Packaged: Fri Jun 27 16:31:55 2008; ramon
+Packaged: Mon Jul  7 15:11:42 2008; ramon

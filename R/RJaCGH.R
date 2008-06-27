@@ -263,10 +263,10 @@ MetropolisSweep.C <- function(y, x, k.max, Chrom, model=NULL,
   if(length(y) != (length(x) + 1)) {
       stop(paste("Length of vector of distances and data vector are different in MetropolisSweep.C", model))
     }
-  cat("\n gc before kiii\n")
-  my.gc()
+###   cat("\n gc before kiii\n")
+###   my.gc()
   kiii <- rep(0, 3*(TOT-1)+1)
-  cat("\n gc before .C(MetropolisSweep\n")
+###   cat("\n gc before .C(MetropolisSweep\n")
 
   res <- .C("MetropolisSweep", y=as.double(y), x=as.double(x),
             varEqual=as.integer(var.equal), genome= as.integer(genome.param),
@@ -304,8 +304,8 @@ MetropolisSweep.C <- function(y, x, k.max, Chrom, model=NULL,
             filename = as.character(filename),
             num_sequences = as.integer(num_sequences)
             )
-  cat("\n gc at return from  .C(MetropolisSweep\n")
-  my.gc()
+###   cat("\n gc at return from  .C(MetropolisSweep\n")
+###   my.gc()
 
 ###   }
   ##Reconstruct objects
@@ -443,8 +443,8 @@ MetropolisSweep.C <- function(y, x, k.max, Chrom, model=NULL,
   attr(obj, "window") <- window
   attr(obj, "singleState") <- singleState
 
-  cat("\n gc before exiting MetropolisSweep\n")
-  my.gc()
+###   cat("\n gc before exiting MetropolisSweep\n")
+###   my.gc()
 
   obj
 
@@ -539,8 +539,8 @@ RJMCMC.NH.HMM.Metropolis <- function(y, Chrom=NULL, x=NULL,
       if(is.null(tau.split.mu)) tau.split.mu <- mean(params$sigma.tau.mu) ^2
 }
 
-  cat("\n gc before starting reversible jump\n")
-  my.gc()
+###   cat("\n gc before starting reversible jump\n")
+###   my.gc()
   
   cat("    Starting Reversible Jump\n")
   if(length(y) != (length(x) + 1))
@@ -567,8 +567,8 @@ RJMCMC.NH.HMM.Metropolis <- function(y, Chrom=NULL, x=NULL,
                            NC=NC, deltaT=deltaT,
                            write_seq = 1)
   class(res) <- "RJaCGH"
-  cat("\n gc before exiting RJMCMC.NH.HMM.Metropolis \n")
-  my.gc()
+###   cat("\n gc before exiting RJMCMC.NH.HMM.Metropolis \n")
+###   my.gc()
 
   res
 }
@@ -712,8 +712,8 @@ RJaCGH.one.array <- function(y, Chrom=NULL, Start=NULL, End=NULL,
         }
         cat("  Chromosome", i, "\n")
 
-        cat("\n gc inside RJaCGH.one.array: before call to RJMCMC.NH.HMM.Metropolis \n")
-        my.gc()
+###         cat("\n gc inside RJaCGH.one.array: before call to RJMCMC.NH.HMM.Metropolis \n")
+###         my.gc()
 
         
         res[[i]] <-
@@ -737,8 +737,8 @@ RJaCGH.one.array <- function(y, Chrom=NULL, Start=NULL, End=NULL,
                                    start.k=start.k, RJ=RJ,
                                    ##auto.label=auto.label,
                                    NC=NC, deltaT=deltaT)
-        cat("\n gc inside RJaCGH.one.array: after call to RJMCMC.NH.HMM.Metropolis \n")
-        my.gc()
+###         cat("\n gc inside RJaCGH.one.array: after call to RJMCMC.NH.HMM.Metropolis \n")
+###         my.gc()
 
         res[[i]]$Pos <- chrom.Pos
         if (!is.null(Pos.rel))
