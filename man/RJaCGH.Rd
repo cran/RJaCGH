@@ -10,7 +10,7 @@ through bayesian methods and Reversible Jump Markov chain Montecarlo.
 RJaCGH(y, Chrom = NULL, Start=NULL, End=NULL, Pos = NULL,
        Dist=NULL, probe.names=NULL, maxVar=NULL, model = "Genome",
        var.equal=TRUE, max.dist=NULL, normal.reference=0,
-       window = NULL, burnin = 10000, TOT =10000,
+       window = 1, burnin = 10000, TOT =10000,
        k.max = 6, stat = NULL, mu.alfa = NULL, mu.beta = NULL,
        s1=NULL, s2=NULL, init.mu=NULL, init.sigma.2=NULL, init.beta=NULL,
        prob.k = NULL, jump.parameters=list(),
@@ -47,8 +47,7 @@ RJaCGH(y, Chrom = NULL, Start=NULL, End=NULL, Pos = NULL,
   \item{normal.reference}{The value considered as the mean of the normal
     state. See details. By default is \code{0}.}
   \item{window}{Multiplier of the standard deviation of the data to
-    determine the width of the normal state. See details. Default (window
-    = NULL) is 1.}
+    determine the width of the normal state. See details. Default is 1.}
 %   \item{normal.ref.percentile}{Percentage for the relabelling of
 %     states. See details. by default is 0.95.}
   \item{burnin}{Number of burn-in iterations in the Markov Chain}
@@ -149,7 +148,7 @@ RJaCGH(y, Chrom = NULL, Start=NULL, End=NULL, Pos = NULL,
   \code{jump.parameters} must be a list with the parameters for the
   moves. It must have components \code{sigma.tau.mu},
   \code{sigma.tau.sigma.2}, \code{sigma.tau.beta} These are vectors of
-  length \code{k.max}. \code{tau.split.mu},  \code{tau.split.beta} are vectors of
+  length \code{k.max}. \code{tau.split.mu} is a vector of
   length 1. If any of them is NULL, a call to the internal function
   \code{get.jump()} is made to find 'good' values.
 
@@ -294,7 +293,7 @@ Pos <- cumsum(Pos)
 Chrom <- rep(1:23, rep(10, 23))
 
 jp <- list(sigma.tau.mu=rep(0.05, 4), sigma.tau.sigma.2=rep(0.03, 4),
-           sigma.tau.beta=rep(0.07, 4), tau.split.mu=0.1, tau.split.beta=0.1)
+           sigma.tau.beta=rep(0.07, 4), tau.split.mu=0.1)
 
 fit.chrom <- RJaCGH(y=y, Pos=Pos, Chrom=Chrom, model="Chrom",
                     burnin=10, TOT=1000, k.max = 4,

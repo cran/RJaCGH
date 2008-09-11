@@ -45,7 +45,7 @@ Pos <- cumsum(Pos)
 Chrom <- rep(1:23, rep(10, 23))
 
 jp <- list(sigma.tau.mu=rep(0.05, 4), sigma.tau.sigma.2=rep(0.03, 4),
-           sigma.tau.beta=rep(0.07, 4), tau.split.mu=0.1, tau.split.beta=0.1)
+           sigma.tau.beta=rep(0.07, 4), tau.split.mu=0.1)
 
 z <- c(rnorm(110, 0, 1), rnorm(20, 3, 1),
        rnorm(100,0, 1)) 

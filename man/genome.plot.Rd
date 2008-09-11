@@ -48,7 +48,7 @@ Pos <- gm13330$PosBase[!is.na(gm13330$LogRatio)]
 Chrom <- gm13330$Chromosome[!is.na(gm13330$LogRatio)]
 
 jp <- list(sigma.tau.mu=rep(0.05, 4), sigma.tau.sigma.2=rep(0.03, 4),
-           sigma.tau.beta=rep(0.07, 4), tau.split.mu=0.1, tau.split.beta=0.1)
+           sigma.tau.beta=rep(0.07, 4), tau.split.mu=0.1)
 fit.genome <- RJaCGH(y=y, Pos=Pos, Chrom=Chrom, model="Genome",
 burnin=1000, TOT=1000, jump.parameters=jp, k.max = 4)
 genome.plot(fit.genome)

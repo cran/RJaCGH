@@ -86,14 +86,15 @@ smoother=FALSE, \ldots)
   \code{\link{gelman.rubin.plot}}, \code{\link{collapseChain}}}
 
 \examples{
-\dontrun{
+
 y <- c(rnorm(100, 0, 1), rnorm(10, -3, 1), rnorm(20, 3, 1), rnorm(100,
                                                                   0, 1))
-Pos <- round(runif(230))
+% this does not work Pos <- round(runif(230))
+Pos <- sample(1:10, 230, replace=TRUE)
 Pos <- cumsum(Pos)
 Chrom <- rep(1:23, rep(10, 23))
 jp <- list(sigma.tau.mu=rep(0.5, 4), sigma.tau.sigma.2=rep(0.3, 4),
-           sigma.tau.beta=rep(0.7, 4), tau.split.mu=0.5, tau.split.beta=0.5)
+           sigma.tau.beta=rep(0.7, 4), tau.split.mu=0.5)
 fit.Chrom <- RJaCGH(y=y, Pos=Pos, Chrom=Chrom, model="Chrom",
                     burnin=100, TOT=1000, jump.parameters=jp, k.max=4)
 fit.Genom <- RJaCGH(y=y, Pos=Pos, Chrom=Chrom, model="Genome", burnin=100, TOT=1000, jump.parameters=jp, k.max=4)
@@ -120,7 +121,7 @@ fit.none.array <- RJaCGH(y=ya, Pos=Pos, Chrom=NULL, model="None",
 plot(fit.Chrom.array)
 plot(fit.Genom.array)
 plot(fit.none.array)
-}
+
 }
 \keyword{models}% at least one, from doc/KEYWORDS
 

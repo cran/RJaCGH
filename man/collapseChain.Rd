@@ -55,19 +55,16 @@ Pos <- cumsum(Pos)
 Chrom <- rep(1:23, rep(10, 23))
 
 jp <- list(sigma.tau.mu=rep(0.5, 4), sigma.tau.sigma.2=rep(0.3, 4),
-           sigma.tau.beta=rep(0.7, 4), tau.split.mu=0.5, tau.split.beta=0.5)
+           sigma.tau.beta=rep(0.7, 4), tau.split.mu=0.5)
 
-fit.chrom <- RJaCGH(y=y, Pos=Pos, Chrom=Chrom, model="Chrom",
-                    burnin=10, TOT=1000, k.max = 4,
-                    jump.parameters=jp)
 fit.genome <- list()
 for (i in 1:4) {
 fit.genome[[i]] <- RJaCGH(y=y, Pos=Pos, Chrom=Chrom, model="Genome",
 burnin=10, TOT=1000, jump.parameters=jp, k.max = 4)
 }
 
-\dontrun{gelman.rubin.plot(fit.genome)}
+gelman.rubin.plot(fit.genome)
 ##If all R seem to be round 1
-\dontrun{fit.genome <- collapseChain(fit.genome)}
+fit.genome <- collapseChain(fit.genome)
 }
 \keyword{models}% at least one, from doc/KEYWORDS

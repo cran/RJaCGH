@@ -1074,7 +1074,7 @@ void Birth(double *y, double *x, int *varEqual, int *genome, int *index,
       candidatoSigma2[*r] = candidatoSigma2[0];
     }
     else {
-      candidatoSigma2[*r] = runif(0, *maxVar);
+      candidatoSigma2[*r] = runif(0, sqrt(*maxVar));
       candidatoSigma2[*r] = pow(candidatoSigma2[*r], 2);
     }
     for (i=0; i<*r; ++i) {
@@ -1143,7 +1143,7 @@ void Birth(double *y, double *x, int *varEqual, int *genome, int *index,
 	candidatoSigma22[*r] = candidatoSigma22[0];
       }
       else {
-	candidatoSigma22[*r] = runif(0, *maxVar);
+	candidatoSigma22[*r] = runif(0, sqrt(*maxVar));
 	candidatoSigma22[*r] = pow(candidatoSigma22[*r], 2);
       }
       for (i=0; i<*r; ++i) {
@@ -3352,8 +3352,8 @@ void MetropolisSweep(double *y, double *x, int *varEqual, int *genome,
   indexBeta[0] = 0;
   indexStat[0] = 0;
   for(i=1; i<*kMax; ++i) {
-    indexMu[i] = (*TOT)*i + indexMu[i-1];
-    indexBeta[i] = (*TOT)*i*i + indexBeta[i-1];
+    indexMu[i] = (*TOT * 2)*i + indexMu[i-1];
+    indexBeta[i] = (*TOT * 2)*i*i + indexBeta[i-1];
     indexStat[i] = i + indexStat[i-1];
   }
   Rprintf("       Start burn-in\n");
@@ -3388,7 +3388,7 @@ void MetropolisSweep(double *y, double *x, int *varEqual, int *genome,
 
   /*  loglik of start values */
   for (i=1; i<=*kMax;++i) {
-    loglik[(i-1)* *TOT] = loglikLastCoupled[i-1];
+    loglik[(i-1)* *TOT * 2] = loglikLastCoupled[i-1];
     for (j=0; j<i; ++j) {
       OldStatCoupled[j] = stat[indexStat[i-1] + j];
       OldMuCoupled[j] = mu[indexMu[i-1] + j];
@@ -3481,7 +3481,7 @@ void MetropolisSweep(double *y, double *x, int *varEqual, int *genome,
     }
       
     /* Main chain */
-    loglik[*TOT * (rCoupled[0]-1) + times[rCoupled[0]-1]] = 
+    loglik[*TOT * 2 * (rCoupled[0]-1) + times[rCoupled[0]-1]] = 
       loglikLastCoupled[rCoupled[0]-1];
       
     /*  Auxiliaries for viterbi */
@@ -3644,7 +3644,7 @@ void MetropolisSweep(double *y, double *x, int *varEqual, int *genome,
       /* save main parameters */
       if (mainAccepted) {
 	mainAccepted = 0;
-	loglik[*TOT * (rCoupled[0]-1) + times[rCoupled[0]-1]] =
+	loglik[*TOT * 2 * (rCoupled[0]-1) + times[rCoupled[0]-1]] =
 	  loglikLastCoupled[rCoupled[0]-1];
 
 	/*  Auxiliaries for viterbi */
@@ -3809,7 +3809,7 @@ void MetropolisSweep(double *y, double *x, int *varEqual, int *genome,
       /* save main parameters */
       if (mainAccepted) {
 	mainAccepted = 0;
-	loglik[*TOT * (rCoupled[0]-1) + times[rCoupled[0]-1]] = 
+	loglik[*TOT * 2 * (rCoupled[0]-1) + times[rCoupled[0]-1]] = 
 	  loglikLastCoupled[rCoupled[0]-1];
 	/*  Auxiliaries for viterbi */
 	for (i=0; i< rCoupled[0]; ++i) {
@@ -3926,7 +3926,7 @@ void MetropolisSweep(double *y, double *x, int *varEqual, int *genome,
 	for (i=0; i<rCoupled[0]*rCoupled[0]; ++i) {
 	  beta[indexBeta[rCoupled[0]-1] + (times[rCoupled[0]-1]*rCoupled[0]*rCoupled[0]) + i] = NewBetaCoupled[i];
 	}
-	loglik[*TOT * (rCoupled[0]-1) + times[rCoupled[0]-1]] = 
+	loglik[*TOT * 2 * (rCoupled[0]-1) + times[rCoupled[0]-1]] = 
 	  loglikLastCoupled[rCoupled[0]-1];
 	times[rCoupled[0]-1]++;
       }

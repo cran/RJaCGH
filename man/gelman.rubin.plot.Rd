@@ -72,7 +72,7 @@ Pos <- cumsum(Pos)
 Chrom <- rep(1:23, rep(10, 23))
 
 jp <- list(sigma.tau.mu=rep(0.5, 4), sigma.tau.sigma.2=rep(0.3, 4),
-           sigma.tau.beta=rep(0.7, 4), tau.split.mu=0.5, tau.split.beta=0.5)
+           sigma.tau.beta=rep(0.7, 4), tau.split.mu=0.5)
 
 fit.genome <- list()
 for (i in 1:4) {
