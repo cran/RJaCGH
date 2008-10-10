@@ -203,7 +203,7 @@ MetropolisSweep.C <- function(y, x, k.max, Chrom, model=NULL,
                               ##auto.label=NULL,
                               NC, deltaT,
                               write_seq,
-                              window = 1,
+                              window = NULL,
                               singleState = FALSE,
                               delete_gzipped = .__DELETE_GZIPPED) {
 ###   if (!is.null(auto.label) && auto.label < 0 && auto.label > 1)
@@ -391,7 +391,9 @@ MetropolisSweep.C <- function(y, x, k.max, Chrom, model=NULL,
   k.max <- max(as.numeric(levels(obj$k)))
   for(i in (1:k.max))
       obj[[i]]$state.labels <- sllist[[i]]
-  
+  attr(obj, "window") <- attr(sllist, "window")
+  attr(obj, "normal.reference") <- attr(sllist, "normal.reference")
+  attr(obj, "singleState") <- attr(sllist, "singleState")
   obj$prob.b <- res$probB
   obj$prob.d <- res$probD
   obj$prob.s <- res$probS
@@ -442,9 +444,6 @@ MetropolisSweep.C <- function(y, x, k.max, Chrom, model=NULL,
     
   rm(res)
   gc()
-  attr(obj, "normal.reference") <- normal.reference
-  attr(obj, "window") <- window
-  attr(obj, "singleState") <- singleState
 
 ###   cat("\n gc before exiting MetropolisSweep\n")
 ###   my.gc()
@@ -460,7 +459,7 @@ RJMCMC.NH.HMM.Metropolis <- function(y, Chrom=NULL, x=NULL,
                                      index=NULL, maxVar, 
                                      model=NULL, var.equal, max.dist=NULL,
                                      normal.reference=0, ## normal.ref.percentile=0.95,
-                                     window = 1,
+                                     window = NULL,
                                      burnin=0, TOT=1000, k.max=6,
                                      stat=NULL, mu.alfa=NULL,
                                      mu.beta=NULL,
@@ -855,7 +854,7 @@ RJaCGH <- function(y, Chrom=NULL, Start=NULL, End=NULL, Pos=NULL,
                    Dist=NULL, probe.names=NULL, maxVar=NULL,
                    model="Genome", var.equal=TRUE, max.dist=NULL,
                    normal.reference=0, ## normal.ref.percentile=0.95,
-                   window = 1,
+                   window = NULL,
                    burnin=10000, TOT=10000, k.max=6,
                    stat=NULL, mu.alfa=NULL, mu.beta=NULL,
                    s1=NULL, s2=NULL, init.mu=NULL, init.sigma.2=NULL,
@@ -2567,7 +2566,7 @@ genome.plot <- function(obj, col=NULL, breakpoints=NULL, legend.pos=NULL,...) {
 ## }
 
 
-relabelStates <- function(obj, normal.reference=0, window=1,
+relabelStates <- function(obj, normal.reference=0, window=NULL,
                           singleState = FALSE) {
     ## singleState = TRUE assigns each state to a single state,
     ## so each state has a p = 1 of being something and
@@ -2576,24 +2575,28 @@ relabelStates <- function(obj, normal.reference=0, window=1,
   UseMethod("relabelStates")
 }
 
-relabel.core <- function(obj, normal.reference=0, window=1,
+relabel.core <- function(obj, normal.reference=0, window=NULL,
                          singleState = FALSE)  {
-    intervalwidth <- window * sd(obj$y)
-    k.max <- max(as.numeric(levels(obj$k)))
-    model.probs <- prop.table(table(obj$k))
+  if (is.null(window)) {
+    window <- sd(obj$y)
+  } else {
+    window <- window * sd(obj$y)
+  }
+  k.max <- max(as.numeric(levels(obj$k)))
+  model.probs <- prop.table(table(obj$k))
   state.labels.list <- list()
   for (i in 1:k.max) {
-      if (model.probs[i] > 0) {
+    if (model.probs[i] > 0) {
       if(!is.null(dim(obj[[i]]$state.labels))) {
         obj.sum <- summary.RJaCGH(obj, k=i, point.estimator="median",
                                   quantiles = 0.5)
       }
       else {
-          obj.sum <- list()
-          obj.sum$mu <- apply(obj[[i]]$mu, 2, median)
-          obj.sum$sigma.2 <- apply(obj[[i]]$sigma.2, 2, median)
+        obj.sum <- list()
+        obj.sum$mu <- apply(obj[[i]]$mu, 2, median)
+        obj.sum$sigma.2 <- apply(obj[[i]]$sigma.2, 2, median)
       }
-      limits <- normal.reference + c(-1, 1) * intervalwidth
+      limits <- normal.reference + c(-1, 1) * window
       probs <- matrix(0, nrow=i, ncol=3)
       probs[,1] <- pnorm(limits[1], obj.sum$mu,
                          sqrt(obj.sum$sigma.2),
@@ -2605,35 +2608,39 @@ relabel.core <- function(obj, normal.reference=0, window=1,
       state.labels.list[[i]] <- probs
       modal.state <- apply(probs, 1, which.max)
       if(singleState) {
-          msarray <- cbind(seq_along(modal.state), modal.state)
-          state.labels.list[[i]] <- matrix(0, nrow = length(modal.state),
-                                          ncol = 3)
-          state.labels.list[[i]][msarray] <- 1
+        msarray <- cbind(seq_along(modal.state), modal.state)
+        state.labels.list[[i]] <- matrix(0, nrow = length(modal.state),
+                                         ncol = 3)
+        state.labels.list[[i]][msarray] <- 1
       }
       colnames(state.labels.list[[i]]) <- c("Loss", "Normal", "Gain")
       ## rownames of state.labels
       rownames(state.labels.list[[i]]) <- letters[1:nrow(probs)]
       basicLabel <- c("Loss", "Normal", "Gain")
       for(ii in c(1, 2, 3)) {
-          this.type <- which(modal.state == ii)
-          l.this.type <- length(this.type)
-          if(l.this.type == 0) next
-          this.label <- basicLabel[ii]
-          if(l.this.type == 1)
-              rownames(state.labels.list[[i]])[this.type] <- this.label
-          else
-              rownames(state.labels.list[[i]])[this.type] <-
-                  paste(this.label, 1:l.this.type, sep = "-")
+        this.type <- which(modal.state == ii)
+        l.this.type <- length(this.type)
+        if(l.this.type == 0) next
+        this.label <- basicLabel[ii]
+        if(l.this.type == 1)
+          rownames(state.labels.list[[i]])[this.type] <- this.label
+        else
+          rownames(state.labels.list[[i]])[this.type] <-
+            paste(this.label, 1:l.this.type, sep = "-")
       }      
     } else {## did not visit these states
-        state.labels.list[[i]] <- matrix(rep(-9, 3 * i), ncol = 3)
-        colnames(state.labels.list[[i]]) <- c("Loss", "Normal", "Gain")
+      state.labels.list[[i]] <- matrix(rep(-9, 3 * i), ncol = 3)
+      colnames(state.labels.list[[i]]) <- c("Loss", "Normal", "Gain")
     }
   }
+
+  attr(state.labels.list, "window") <- window
+  attr(state.labels.list, "normal.reference") <- normal.reference
+  attr(state.labels.list, "singleState") <- singleState
   state.labels.list
 }
-                           
-relabelStates.RJaCGH <- function(obj, normal.reference=0, window=1,
+
+relabelStates.RJaCGH <- function(obj, normal.reference=0, window=NULL,
                              singleState = FALSE)  {
   sllist <- relabel.core(obj = obj,
                              normal.reference = normal.reference,
@@ -2643,13 +2650,10 @@ relabelStates.RJaCGH <- function(obj, normal.reference=0, window=1,
     for(i in (1:k.max)) {
         obj[[i]]$state.labels <- sllist[[i]]
     }
-  attr(obj, "window") <- window
-  attr(obj, "normal.reference") <- normal.reference
-  attr(obj, "singleState") <- singleState
   return(obj)
 }
 
-relabelStates.RJaCGH.Chrom <- function(obj, normal.reference=0, window=1,
+relabelStates.RJaCGH.Chrom <- function(obj, normal.reference=0, window=NULL,
                                    singleState = FALSE)
   {
   for(chr in unique(obj$Chrom)) {
@@ -2660,7 +2664,7 @@ relabelStates.RJaCGH.Chrom <- function(obj, normal.reference=0, window=1,
   obj
 }
 
-relabelStates.RJaCGH.Genome <- function(obj, normal.reference=0, window=1,
+relabelStates.RJaCGH.Genome <- function(obj, normal.reference=0, window=NULL,
                                     singleState = FALSE)
   {
   obj <- relabelStates.RJaCGH(obj, normal.reference=
@@ -2670,7 +2674,7 @@ relabelStates.RJaCGH.Genome <- function(obj, normal.reference=0, window=1,
 }
 
 
-relabelStates.RJaCGH.array <- function(obj, normal.reference=0, window = 1,
+relabelStates.RJaCGH.array <- function(obj, normal.reference=0, window=NULL,
                                    singleState = FALSE)
   {
     for (i in obj$array.names) {

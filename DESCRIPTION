@@ -1,10 +1,10 @@
 Package: RJaCGH
-Version: 1.5.5
-Date: 2008-09-11
+Version: 1.5.6
+Date: 2008-10-10
 Title: Reversible Jump MCMC for the analysis of CGH arrays.
 Author: Oscar Rueda <omrueda@cnio.es> and Ramon Diaz-Uriarte
 	<rdiaz@ligarto.org>. zlib from Jean-loup Gailly and Mark Adler;
-	see README. Function "getHostname.System" from package R.utils
+	see src/README. Function "getHostname.System" from package R.utils
 	by Henrik Bengtsson.
 Maintainer: Oscar Rueda <omrueda@cnio.es>
 Depends: R (>= 2.6.0)
@@ -16,4 +16,4 @@ LazyLoad: Yes
 License: GPL-3
 URL: http://www.r-project.org
 biocViews: Microarray, DNACopyNumber
-Packaged: Thu Sep 11 14:54:26 2008; ramon
+Packaged: Fri Oct 10 12:53:46 2008; omrueda

@@ -12,15 +12,15 @@
 }
 \usage{
 relabelStates(obj, normal.reference = 0,
-              window = 1, singleState = FALSE)
+              window = NULL, singleState = FALSE)
 \method{relabelStates}{RJaCGH}(obj, normal.reference = 0,
-                               window = 1, singleState = FALSE)
+                               window = NULL, singleState = FALSE)
 \method{relabelStates}{RJaCGH.Chrom}(obj, normal.reference = 0,
-                              window = 1, singleState = FALSE)
+                              window = NULL, singleState = FALSE)
 \method{relabelStates}{RJaCGH.Genome}(obj, normal.reference = 0,
-                       window = 1, singleState = FALSE)
+                       window = NULL, singleState = FALSE)
 \method{relabelStates}{RJaCGH.array}(obj, normal.reference = 0,
-                       window = 1, singleState = FALSE)
+                       window = NULL, singleState = FALSE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -29,7 +29,8 @@ relabelStates(obj, normal.reference = 0,
     \item{normal.reference}{The value considered as the mean of the normal
     state. See details. By default is \code{0}.}
   \item{window}{Multiplier of the standard deviation of the data to
-    dtermine the width of the normal state. See details. Default is 1.}
+    dtermine the width of the normal state. See details. Default (window
+    = NULL) is 1.}
     \item{singleState}{If TRUE, each state is assigned a probability of
       1 of being Gained or Lost or Normal, and 0 of being
       anyting else. This mimics the behavior of previous versions of
