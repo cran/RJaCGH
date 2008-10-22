@@ -203,7 +203,7 @@ MetropolisSweep.C <- function(y, x, k.max, Chrom, model=NULL,
                               ##auto.label=NULL,
                               NC, deltaT,
                               write_seq,
-                              window = NULL,
+                              window = 1,
                               singleState = FALSE,
                               delete_gzipped = .__DELETE_GZIPPED) {
 ###   if (!is.null(auto.label) && auto.label < 0 && auto.label > 1)
@@ -459,7 +459,7 @@ RJMCMC.NH.HMM.Metropolis <- function(y, Chrom=NULL, x=NULL,
                                      index=NULL, maxVar, 
                                      model=NULL, var.equal, max.dist=NULL,
                                      normal.reference=0, ## normal.ref.percentile=0.95,
-                                     window = NULL,
+                                     window = 1,
                                      burnin=0, TOT=1000, k.max=6,
                                      stat=NULL, mu.alfa=NULL,
                                      mu.beta=NULL,
@@ -854,7 +854,7 @@ RJaCGH <- function(y, Chrom=NULL, Start=NULL, End=NULL, Pos=NULL,
                    Dist=NULL, probe.names=NULL, maxVar=NULL,
                    model="Genome", var.equal=TRUE, max.dist=NULL,
                    normal.reference=0, ## normal.ref.percentile=0.95,
-                   window = NULL,
+                   window = 1,
                    burnin=10000, TOT=10000, k.max=6,
                    stat=NULL, mu.alfa=NULL, mu.beta=NULL,
                    s1=NULL, s2=NULL, init.mu=NULL, init.sigma.2=NULL,
@@ -1256,18 +1256,9 @@ model.averaging.RJaCGH.Genome <- function(obj) {
       prob.states <- objSummary$prob.states
       prob.hiddenStates <- obj[[i]]$state.labels
       prob.states <- prob.states %*% prob.hiddenStates
-
-      for (j in 1:i) {
-        if (length(grep("[L]", colnames(prob.states)[j]))) {
-          Loss <- Loss + probs[i] * prob.states[,j]
-        }
-        else if (length(grep("[N]", colnames(prob.states)[j]))) {
-          Normal <- Normal + probs[i] * prob.states[,j]
-        }
-        else if (length(grep("[G]", colnames(prob.states)[j]))) {
-          Gain <- Gain + probs[i] * prob.states[,j]
-        }
-      }
+      Loss <- Loss + probs[i] * prob.states[,1]
+      Normal <- Normal + probs[i] * prob.states[,2]
+      Gain <- Gain + probs[i] * prob.states[,3]
     }
   }
   res$prob.states <- cbind(Loss, Normal, Gain)
@@ -2566,7 +2557,7 @@ genome.plot <- function(obj, col=NULL, breakpoints=NULL, legend.pos=NULL,...) {
 ## }
 
 
-relabelStates <- function(obj, normal.reference=0, window=NULL,
+relabelStates <- function(obj, normal.reference=0, window=1,
                           singleState = FALSE) {
     ## singleState = TRUE assigns each state to a single state,
     ## so each state has a p = 1 of being something and
@@ -2575,13 +2566,9 @@ relabelStates <- function(obj, normal.reference=0, window=NULL,
   UseMethod("relabelStates")
 }
 
-relabel.core <- function(obj, normal.reference=0, window=NULL,
+relabel.core <- function(obj, normal.reference=0, window=1,
                          singleState = FALSE)  {
-  if (is.null(window)) {
-    window <- sd(obj$y)
-  } else {
-    window <- window * sd(obj$y)
-  }
+  intervalwidth <- window * sd(obj$y)
   k.max <- max(as.numeric(levels(obj$k)))
   model.probs <- prop.table(table(obj$k))
   state.labels.list <- list()
@@ -2596,7 +2583,7 @@ relabel.core <- function(obj, normal.reference=0, window=NULL,
         obj.sum$mu <- apply(obj[[i]]$mu, 2, median)
         obj.sum$sigma.2 <- apply(obj[[i]]$sigma.2, 2, median)
       }
-      limits <- normal.reference + c(-1, 1) * window
+      limits <- normal.reference + c(-1, 1) * intervalwidth
       probs <- matrix(0, nrow=i, ncol=3)
       probs[,1] <- pnorm(limits[1], obj.sum$mu,
                          sqrt(obj.sum$sigma.2),
@@ -2639,8 +2626,7 @@ relabel.core <- function(obj, normal.reference=0, window=NULL,
   attr(state.labels.list, "singleState") <- singleState
   state.labels.list
 }
-
-relabelStates.RJaCGH <- function(obj, normal.reference=0, window=NULL,
+relabelStates.RJaCGH <- function(obj, normal.reference=0, window=1,
                              singleState = FALSE)  {
   sllist <- relabel.core(obj = obj,
                              normal.reference = normal.reference,
@@ -2653,7 +2639,7 @@ relabelStates.RJaCGH <- function(obj, normal.reference=0, window=NULL,
   return(obj)
 }
 
-relabelStates.RJaCGH.Chrom <- function(obj, normal.reference=0, window=NULL,
+relabelStates.RJaCGH.Chrom <- function(obj, normal.reference=0, window=1,
                                    singleState = FALSE)
   {
   for(chr in unique(obj$Chrom)) {
@@ -2664,7 +2650,7 @@ relabelStates.RJaCGH.Chrom <- function(obj, normal.reference=0, window=NULL,
   obj
 }
 
-relabelStates.RJaCGH.Genome <- function(obj, normal.reference=0, window=NULL,
+relabelStates.RJaCGH.Genome <- function(obj, normal.reference=0, window=1,
                                     singleState = FALSE)
   {
   obj <- relabelStates.RJaCGH(obj, normal.reference=
@@ -2674,7 +2660,7 @@ relabelStates.RJaCGH.Genome <- function(obj, normal.reference=0, window=NULL,
 }
 
 
-relabelStates.RJaCGH.array <- function(obj, normal.reference=0, window=NULL,
+relabelStates.RJaCGH.array <- function(obj, normal.reference=0, window = 1,
                                    singleState = FALSE)
   {
     for (i in obj$array.names) {

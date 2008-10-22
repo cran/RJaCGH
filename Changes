@@ -1,7 +1,8 @@
+1.5.7	2008-10-22    Fixed bug in model.averaging (model=Genome)
 1.5.6	2008-10-10    Now relabel.core sets the attributes correctly
-1.5.5	2008-08-21    Fixed bug in relabelStates.RJaCGH and collapse.chain.
-		      window attribute was not retained.
-
+1.5.5	2008-08-21    Fixed bug in relabelStates.RJaCGH and collapse.chain:
+		      window attribute was not retained. Also, set window
+		      default to 1 (not NULL).
 1.5.4	2008-07-07    Fixed lengthy output and examples and details in
 		      DESCRIPTION.
 
