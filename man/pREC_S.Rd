@@ -13,8 +13,7 @@
 }
 \usage{
 pREC_S(obj, p, freq.array, alteration = "Gain",
-       force.write.files = FALSE, verbose = FALSE,
-       delete.rewritten = TRUE)
+       verbose = FALSE)
 
 }
 %- maybe also 'usage' for other objects documented here.
@@ -25,15 +24,15 @@ pREC_S(obj, p, freq.array, alteration = "Gain",
   \item{freq.array}{ Minimum number of arrays that share every
     region.}
   \item{alteration}{ Either 'Gain' or 'Loss'. }
-    \item{force.write.files}{If TRUE, the gzipped files with the Viterbi
-    sequence are written to disk even if they are, supposedly, already
-    there. }
+%   \item{force.write.files}{If TRUE, the gzipped files with the Viterbi
+%     sequence are written to disk even if they are, supposedly, already
+%     there. }
   \item{verbose}{If TRUE provide more details on what is being done, including
     intermediate output from the C functions themselves. Only helpful
     for debugging or if you are bored; this will often write more output than
     you want.}
-  \item{delete.rewritten}{If TRUE, delete the files with the Viterbi
-    sequence from disk.}
+%   \item{delete.rewritten}{If TRUE, delete the files with the Viterbi
+%     sequence from disk.}
 }
 \details{
   This algorithm, as \code{\link{pREC_A}}  computes
@@ -109,7 +108,7 @@ pREC_S(obj, p, freq.array, alteration = "Gain",
   see "Implementing\_pREC\_in\_C.pdf".
 }
 \seealso{\code{\link{RJaCGH}},
-  \code{\link{states}}, \code{\link{model.averaging}},
+  \code{\link{states}}, \code{\link{modelAveraging}},
    \code{\link{print.pREC_S}}
   \code{\link{plot.pREC_S}}
   \code{\link{pREC_A}}
@@ -129,7 +128,7 @@ Pos <- cumsum(Pos)
 Chrom <- rep(1:23, rep(10, 23))
 
 jp <- list(sigma.tau.mu=rep(0.05, 4), sigma.tau.sigma.2=rep(0.03, 4),
-           sigma.tau.beta=rep(0.07, 4), tau.split.mu=0.1)
+           sigma.tau.beta=rep(0.07, 4), tau.split.mu=0.1, tau.split.beta=0.1)
 
 fit.array.genome <- RJaCGH(y=cbind(y,z,zz),
 Pos=Pos, Chrom=Chrom, model="Genome",

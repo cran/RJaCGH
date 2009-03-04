@@ -1,56 +1,27 @@
 useDynLib(RJaCGH)
 
-export("gelman.rubin.plot", "model.averaging",
+export("modelAveraging",
        "normal.HMM.likelihood.NH.C",
        "Q.NH", "plot.Q.NH", "RJaCGH", "simulateRJaCGH",
-       "states", "trace.plot", "collapseChain", "chainsSelect",
-       "pREC_A", "pREC_S", "genome.plot", "relabelStates",
+       "states", "trace.plot", 
+       "pREC_A", "pREC_S", "genomePlot", "relabelStates",
        "smoothMeans"
        
        
        )
 
-
+S3method(tempdir, RJaCGH)
 S3method(summary, RJaCGH)
-S3method(summary, RJaCGH.Chrom)
-S3method(summary, RJaCGH.Genome)
-S3method(summary, RJaCGH.array)
 S3method(print, summary.RJaCGH)
-S3method(print, summary.RJaCGH.Chrom)
-S3method(print, summary.RJaCGH.Genome)
-S3method(print, summary.RJaCGH.array)
 S3method(states, RJaCGH)
-S3method(states, RJaCGH.Chrom)
-S3method(states, RJaCGH.Genome)
-S3method(states, RJaCGH.array)
-S3method(model.averaging, RJaCGH)
-S3method(model.averaging, RJaCGH.Chrom)
-S3method(model.averaging, RJaCGH.Genome)
-S3method(model.averaging, RJaCGH.array)
+S3method(modelAveraging, RJaCGH)
 S3method(plot, RJaCGH)
-S3method(plot, RJaCGH.Chrom)
-S3method(plot, RJaCGH.Genome)
-S3method(plot, RJaCGH.array)
-S3method(collapseChain, RJaCGH)
-S3method(collapseChain, RJaCGH.Chrom)
-S3method(collapseChain, RJaCGH.Genome)
-S3method(collapseChain, RJaCGH.array)
-S3method(chainsSelect, RJaCGH)
-S3method(chainsSelect, RJaCGH.Chrom)
-S3method(chainsSelect, RJaCGH.Genome)
-S3method(chainsSelect, RJaCGH.array)
 S3method(print, pREC_A.none)
 S3method(print, pREC_A.Chromosomes)
 S3method(print, pREC_S.none)
 S3method(print, pREC_S.Chromosomes)
 S3method(plot, pREC_S)
 S3method(relabelStates, RJaCGH)
-S3method(relabelStates, RJaCGH.Chrom)
-S3method(relabelStates, RJaCGH.Genome)
-S3method(relabelStates, RJaCGH.array)
 S3method(smoothMeans, RJaCGH)
-S3method(smoothMeans, RJaCGH.Chrom)
-S3method(smoothMeans, RJaCGH.Genome)
-S3method(smoothMeans, RJaCGH.array)
 
 

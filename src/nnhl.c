@@ -15,14 +15,6 @@
 /* Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, */
 /* USA. */
 
-
-// FIXME:
-// Quitar toas las alocaciones a yy, xx temporales. (los rodeados por P1, P2)
-// prob.states: no calcularlo? hacerlo como viterbi?
-// beta: solo mediana
-  
-
-
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -55,10 +47,8 @@
 // FIXME: compress mu, sigma, etc, too.
 
 #define PR4(x) {Rprintf("\n %s = %f \n", #x,  (float) x); fflush(stdout);}
-#define PR5(x, y) {Rprintf("\n At %s %s = %f \n", #y, #x,  (float) x); fflush(stdout);}
-#define P1(x) {Rprintf("\n        ALLOCATION TO DO  ....... %s \n", #x); fflush(stdout);}
-#define P2(x) {Rprintf("\n        ALLOCATION  DONE  ....... %s \n", #x); fflush(stdout);}
 
+#define PR5(x, y) {Rprintf("\n At %s %s = %f \n", #y, #x,  (float) x); fflush(stdout);}
 
 
 #ifdef DEBUGW
@@ -1074,7 +1064,7 @@ void Birth(double *y, double *x, int *varEqual, int *genome, int *index,
       candidatoSigma2[*r] = candidatoSigma2[0];
     }
     else {
-      candidatoSigma2[*r] = runif(0, sqrt(*maxVar));
+      candidatoSigma2[*r] = runif(0, *maxVar);
       candidatoSigma2[*r] = pow(candidatoSigma2[*r], 2);
     }
     for (i=0; i<*r; ++i) {
@@ -1104,24 +1094,10 @@ void Birth(double *y, double *x, int *varEqual, int *genome, int *index,
     
     for (k=0; k < *genome; ++k) {
       nn = index[k+1] - index[k];
-      //P1(1098);
-      double *yy; yy = Calloc(nn, double);
-      double *xx; xx = Calloc(nn, double);
-      //P2(1098);
-     
-      for (j=0; j < nn-1; ++j) {
-	yy[j] = y[j + index[k]];
-	xx[j] = x[j + index[k]];
-      }
-      xx[nn-1] = 0;
-      yy[nn-1] = y[nn-1 + index[k]];
-      normalNHHMMlikelihood(yy, &newState, xx, &nn, candidatoQ,  
+      normalNHHMMlikelihood(y + index[k], &newState, x + index[k], &nn, candidatoQ,  
 			  statBirth, candidatoMu, candidatoSigma2, 
 			  &loglikPartial);
       loglikCandidate += loglikPartial;
-      Free(xx);
-      Free(yy);
-
     }
     probBirth = probBirth + heat * (loglikCandidate - *loglikLast);
     probBirth = probBirth + log(1-pb[*r]) - log(pb[*r-1]);
@@ -1143,7 +1119,7 @@ void Birth(double *y, double *x, int *varEqual, int *genome, int *index,
 	candidatoSigma22[*r] = candidatoSigma22[0];
       }
       else {
-	candidatoSigma22[*r] = runif(0, sqrt(*maxVar));
+	candidatoSigma22[*r] = runif(0, *maxVar);
 	candidatoSigma22[*r] = pow(candidatoSigma22[*r], 2);
       }
       for (i=0; i<*r; ++i) {
@@ -1176,23 +1152,10 @@ void Birth(double *y, double *x, int *varEqual, int *genome, int *index,
       probBirth2 = probBirth2 - dnorm(candidatoMu2[*r], *muAlfa, *muBeta, 1);
       for (k=0; k < *genome; ++k) {
 	nn = index[k+1] - index[k];
-	//P1(1170);
-	double *yy; yy = Calloc(nn, double);
-	double *xx; xx = Calloc(nn, double);
-	//P2(1170);
-	
-	for (j=0; j < nn-1; ++j) {
-	  yy[j] = y[j + index[k]];
-	  xx[j] = x[j + index[k]];
-	}
-	xx[nn-1] = 0;
-	yy[nn-1] = y[nn-1 + index[k]];
-	normalNHHMMlikelihood(yy, &newState, xx, &nn, candidatoQ2, 
+	normalNHHMMlikelihood(y + index[k], &newState, x + index[k], &nn, candidatoQ2, 
 			      statBirth, candidatoMu2, candidatoSigma22, 
 			      &loglikPartial);
 	loglikCandidate2 += loglikPartial;
-	Free(xx);
-	Free(yy);
     }
       probBirth2 = probBirth2 + heat * (*loglikLast - loglikCandidate2);
       probBirth2 = probBirth2 + log(pb[*r-1]) - log(1-pb[*r]);
@@ -1323,22 +1286,10 @@ void Death(double *y, double *x, int *genome, int *index, double *mu, double *si
   probDeath = probDeath + log(probK[*r-2]) - log(probK[*r-1]);
   for (k=0; k < *genome; ++k) {
     nn = index[k+1] - index[k];
-    //P1(1316);
-    double *yy; yy = Calloc(nn, double);
-    double *xx; xx = Calloc(nn, double);
-    //P2(1316);
-    for (j=0; j < nn-1; ++j) {
-      yy[j] = y[j + index[k]];
-      xx[j] = x[j + index[k]];
-    }
-    xx[nn-1] = 0;
-    yy[nn-1] = y[nn-1 + index[k]];
-    normalNHHMMlikelihood(yy, &newState, xx, &nn, candidatoQ,  
+    normalNHHMMlikelihood(y + index[k], &newState, x + index[k], &nn, candidatoQ,  
 			  statDeath, candidatoMu, candidatoSigma2, 
 			  &loglikPartial);
     loglikCandidate += loglikPartial;
-    Free(xx);
-    Free(yy);
   }
   probDeath = probDeath + dnorm(u1bp, *muAlfa, *s1, 1);
   probDeath = probDeath - dnorm(u1bp, *muAlfa, *muBeta, 1);
@@ -1426,22 +1377,10 @@ void Death(double *y, double *x, int *genome, int *index, double *mu, double *si
     probDeath2 = probDeath2 - dnorm(u2b, *muAlfa, *s1, 1);
     for (k=0; k < *genome; ++k) {
       nn = index[k+1] - index[k];
-      //P1(1417);
-      double *yy; yy = Calloc(nn, double);
-      double *xx; xx = Calloc(nn, double);
-      //P2(1417);
-      for (j=0; j < nn-1; ++j) {
-	yy[j] = y[j + index[k]];
-	xx[j] = x[j + index[k]];
-      }
-      xx[nn-1] = 0;
-      yy[nn-1] = y[nn-1 + index[k]];
-      normalNHHMMlikelihood(yy, &newState, xx, &nn, candidatoQ,  
+      normalNHHMMlikelihood(y + index[k], &newState, x + index[k], &nn, candidatoQ,  
 			    statDeath, candidatoMu, candidatoSigma2, 
 			    &loglikPartial);
       loglikCandidate2 += loglikPartial;
-      Free(xx);
-      Free(yy);
     }
     probDeath2 = probDeath2 + heat * (*loglikLast - loglikCandidate2); 
     probDeath2 = probDeath2 + log(1.0 - pb[*r-1]) - log(pb[*r-2]);
@@ -1644,18 +1583,8 @@ void Split(double *y, double *x, int *varEqual, int *genome, int *index,
     }
     for (k=0; k < *genome; ++k) {
       nn = index[k+1] - index[k];
-      //P1(1633);
-      double *yy; yy = Calloc(nn, double);
-      double *xx; xx = Calloc(nn, double);
-      //P2(1633);
-      for (j=0; j < nn-1; ++j) {
-	yy[j] = y[j + index[k]];
-	xx[j] = x[j + index[k]];
-      }
-      xx[nn-1] = 0;
-      yy[nn-1] = y[nn-1 + index[k]];
 
-      normalNHHMMlikelihood(yy, &newState, xx, &nn, candidatoQ,  
+      normalNHHMMlikelihood(y + index[k], &newState, x + index[k], &nn, candidatoQ,  
 			    statSplit, candidatoMu, candidatoSigma2, 
 			    &loglikPartial);
 #ifdef DEBUG
@@ -1665,9 +1594,6 @@ void Split(double *y, double *x, int *varEqual, int *genome, int *index,
       loglikCandidate += loglikPartial;
       /*       delete [] xx; */
       /*       delete [] yy; */
-      Free(xx);
-      Free(yy);
-
     }
     probSplit = probSplit + heat * (loglikCandidate - *loglikLast);
     probSplit = probSplit + log(1-ps[*r]) - log(ps[*r-1]) + log(*r) - log(*r+1);
@@ -1906,22 +1832,10 @@ void Combine(double *y, double *x, int *varEqual, int *genome, int *index,
     }
     for (k=0; k < *genome; ++k) {
       nn = index[k+1] - index[k];
-      //P1(1893);
-      double *yy; yy = Calloc(nn, double);
-      double *xx; xx = Calloc(nn, double);
-      //P2(1893);
-      for (j=0; j < nn-1; ++j) {
-	yy[j] = y[j + index[k]];
-	xx[j] = x[j + index[k]];
-      }
-      xx[nn-1] = 0;
-      yy[nn-1] = y[nn-1 + index[k]];
-      normalNHHMMlikelihood(yy, &newState, xx, &nn, candidatoQ,  
+      normalNHHMMlikelihood(y + index[k], &newState, x + index[k], &nn, candidatoQ,  
 			    statCombine, candidatoMu, candidatoSigma2, 
 			    &loglikPartial);
       loglikCandidate += loglikPartial;
-      Free(xx);
-      Free(yy);
     }
     probCombine = probCombine + heat * (*loglikLast - loglikCandidate);
     probCombine = probCombine + log(1.0 -ps[*r-1]) - log(ps[*r-2]);
@@ -2109,7 +2023,7 @@ void MetropolisUpdate(double *y, double *x, int *varEqual,
 #endif
 
 
-  int i, j, k;
+  int i, k;
   double acepProb;
   double loglikCandidate = 0;
   double loglikPartial = 0;
@@ -2133,21 +2047,9 @@ void MetropolisUpdate(double *y, double *x, int *varEqual,
 
   for (k=0; k < *genome; ++k) {
     nn = index[k+1] - index[k];
-    //P1(2119);
-    double *yy; yy = Calloc(nn, double);
-    double *xx; xx = Calloc(nn, double);
-    //P2(2119);
-    for (j=0; j < nn-1; ++j) {
-      yy[j] = y[j + index[k]];
-      xx[j] = x[j + index[k]];
-    }
-    xx[nn-1] = 0;
-    yy[nn-1] = y[nn-1 + index[k]];
-    normalNHHMMlikelihood(yy, r, xx, &nn, q,  stat, candidatoMu, sigma2, 
+    normalNHHMMlikelihood(y + index[k], r, x + index[k], &nn, q,  stat, candidatoMu, sigma2, 
 			  &loglikPartial);
     loglikCandidate += loglikPartial;
-    Free(xx);
-    Free(yy);
   }
       
   acepProb = acepProb + heat * (loglikCandidate - *loglikLast);
@@ -2194,21 +2096,9 @@ void MetropolisUpdate(double *y, double *x, int *varEqual,
     }
     for (k=0; k < *genome; ++k) {
       nn = index[k+1] - index[k];
-      //P1(2177);
-      double *yy; yy = Calloc(nn, double);
-      double *xx; xx = Calloc(nn, double);
-      //P2(2177);
-      for (j=0; j < nn-1; ++j) {
-	yy[j] = y[j + index[k]];
-	xx[j] = x[j + index[k]];
-      }
-      xx[nn-1] = 0;
-      yy[nn-1] = y[nn-1 + index[k]];      
-      normalNHHMMlikelihood(yy, r, xx, &nn, q, stat, mu, candidatoSigma2, 
+      normalNHHMMlikelihood(y + index[k], r, x + index[k], &nn, q, stat, mu, candidatoSigma2, 
 			    &loglikPartial);
       loglikCandidate += loglikPartial;
-      Free(xx);
-      Free(yy);
     }
     acepProb = acepProb + heat * (loglikCandidate - *loglikLast);
     /* If variances are equal we should not do this r times */
@@ -2248,21 +2138,9 @@ void MetropolisUpdate(double *y, double *x, int *varEqual,
     }
     for (k=0; k < *genome; ++k) {
       nn = index[k+1] - index[k];
-      //P1(2229);
-      double *yy; yy = Calloc(nn, double);
-      double *xx; xx = Calloc(nn, double);
-      //P2(2229);
-      for (j=0; j < nn-1; ++j) {
-	yy[j] = y[j + index[k]];
-	xx[j] = x[j + index[k]];
-      }
-      xx[nn-1] = 0;
-      yy[nn-1] = y[nn-1 + index[k]];
-      normalNHHMMlikelihood(yy, r, xx, &nn, q,  stat, mu, sigma2, 
+      normalNHHMMlikelihood(y + index[k], r, x + index[k], &nn, q,  stat, mu, sigma2, 
 			    &loglikPartial);
       loglikCandidate += loglikPartial;
-      Free(xx);
-      Free(yy);
     }
     acepProb = acepProb + heat * (loglikCandidate - *loglikLast);
 /*     Rprintf("\n  acepProb 1 = %f\n", acepProb); */
@@ -2443,8 +2321,8 @@ void viterbi_genome(double *y, double *x, int *genome, int *index,
     nn = index[g+1] - index_g;
     nn_minus_1 = nn - 1;
     int *bAux; bAux = Calloc(*k, int);
-    double *yy; yy = Calloc(nn, double);
-    double *xx; xx = Calloc(nn, double);
+/*     double *yy; yy = Calloc(nn, double); */
+/*     double *xx; xx = Calloc(nn, double); */
     double *mAux; mAux = Calloc(*k, double);
     double **m; m = Calloc(nn, double*);
     int **b; b = Calloc(nn, int*);
@@ -2452,19 +2330,21 @@ void viterbi_genome(double *y, double *x, int *genome, int *index,
       m[jj] = Calloc(*k, double);
       b[jj] = Calloc(*k, int);
     }
-    for (i=0; i < nn_minus_1; i++) {
-      yy[i] = y[i + index_g];
-      xx[i] = x[i + index_g];
-    }
-    xx[nn_minus_1] = 0;
-    yy[nn_minus_1] = y[nn_minus_1 + index_g];
+/*     for (i=0; i < nn_minus_1; i++) { */
+/*       yy[i] = y[i + index_g]; */
+/*       xx[i] = x[i + index_g]; */
+/*     } */
+/*     xx[nn_minus_1] = 0; */
+/*     yy[nn_minus_1] = y[nn_minus_1 + index_g]; */
     
     /*  Forward recursion */
     for(j=0; j<*k; j++) {
-      m[0][j] = logstat_j[j] + dnorm(yy[0], mu[j], sd_j[j], 1);
+      //      m[0][j] = logstat_j[j] + dnorm(yy[0], mu[j], sd_j[j], 1);
+      m[0][j] = logstat_j[j] + dnorm(y[index_g], mu[j], sd_j[j], 1);
+
     }
     for(i=1; i < nn; i++){
-      double xx_i_1_1 = xx[i - 1] - 1;
+      double xx_i_1_1 = x[(i + index_g) - 1] - 1;
       int i_minus_1 = i - 1;
       for (j=0; j < *k; j++) {
 	/*	log_Q[j][j] = 0.0; */
@@ -2496,7 +2376,8 @@ void viterbi_genome(double *y, double *x, int *genome, int *index,
 	revsort(mAux, bAux, *k);
 	b[i][j] = bAux[0];
 	m[i][j] = mAux[0] +
-	  dnorm(yy[i], mu[j], sd_j[j], 1);
+	  dnorm(y[i + index_g], mu[j], sd_j[j], 1);
+	//	  dnorm(yy[i], mu[j], sd_j[j], 1);
       }
     }
 
@@ -2511,8 +2392,6 @@ void viterbi_genome(double *y, double *x, int *genome, int *index,
     for (i = nn-2; i >= 0; --i) {
       states[index_g + i] = b[(i + 1)][states[index_g_plus_1 + i] - 1];
     }
-    Free(xx);
-    Free(yy);
     Free(bAux);
     Free(mAux);
     Free_2(m, nn);
@@ -2615,6 +2494,7 @@ void wholeViterbi(double *y, double *x, int *genome, int *index,
 /*   the times that sequence is repeated */
 
   int i, j, countrep, repeated;
+  countrep = -9; //shut-up warnings on use uninitialized
   int *states, *lastSeq, lastState;
   double *AuxMu, *AuxSigma2, *AuxBeta;
   FILE *seqFile;
@@ -2625,8 +2505,8 @@ void wholeViterbi(double *y, double *x, int *genome, int *index,
   AuxBeta = (double *) R_alloc(*k * *k, sizeof(double));
   seqFile = fopen(*filename, "w");
   if (seqFile == NULL) {
-    Rprintf("Can't open file for writing\n");
-    error("ERROR in wholeViterbi: Can't open file for writing\n");
+    Rprintf("Can not open file for writing\n");
+    error("\n ERROR in wholeViterbi: can not open file for writing\n");
   }
   else {
     i = 0;
@@ -2872,29 +2752,12 @@ void doBurnin(double *y, double *x, int *varEqual, int *genome,
       }
       for (m=0; m < *genome; ++m) {
 	nn = index[m+1] - index[m];
-	//P1(2851);
-	double *yy; yy = Calloc(nn, double);
-	double *xx; xx = Calloc(nn, double);
-	//P2(2851);
-	/*  Initialization */
-	for (j=0; j < nn-1; ++j) {
-	  yy[j] = -9999;
-	  xx[j] = -9999;
-	}
 	double loglikPartial = 0;
-	for (j=0; j < nn-1; ++j) {
-	  yy[j] = y[j + index[m]];
-	  xx[j] = x[j + index[m]];
-	}
-	xx[nn-1] = 0;
-	yy[nn-1] = y[index[m + 1] - 1];
-	  
-	normalNHHMMlikelihood(yy, &i, xx, &nn, qCoupled, OldStatCoupled, 
+
+	normalNHHMMlikelihood(y + index[m], &i, x + index[m], &nn, qCoupled, OldStatCoupled, 
 			      OldMuCoupled, OldSigma2Coupled, 
 			      &loglikPartial);
 	loglikLastCoupled[(nc * *kMax) + (i-1)] += loglikPartial;
-	Free(xx);
-	Free(yy);
       }
     }
   }
@@ -3250,42 +3113,31 @@ void MetropolisSweep(double *y, double *x, int *varEqual, int *genome,
   PR(dummy_random_number);
 #endif
 
-  //  Rprintf("\n  +++++++ ENTERING MetropolisSweep in C +++++++ \n");
   /* Coupled parallel chains */
   double *muCoupled; muCoupled = Calloc(*NC * *kMax * (*kMax+1) / 2, double);
   double *sigma2Coupled; sigma2Coupled = Calloc(*NC * *kMax * (*kMax+1) / 2, double);
   double *betaCoupled; betaCoupled = Calloc(*NC * *kMax * (*kMax+1) * (2* *kMax+1) / 6, 
 					    double);
-  //  Rprintf("\n    ++++++++++ allocation 1 done +++++++\n");
-  
   int nc;
   double *loglikLastCoupled; loglikLastCoupled = Calloc(*NC * *kMax, double);
   double *OldStatCoupled; OldStatCoupled = Calloc(*kMax, double);
   double *OldMuCoupled; OldMuCoupled = Calloc(*kMax, double);
-  //  Rprintf("\n    ++++++++++ allocation 2 done +++++++\n");
-
   double *OldSigma2Coupled; OldSigma2Coupled = Calloc(*kMax, double);
   double *OldBetaCoupled; OldBetaCoupled = Calloc(*kMax * *kMax, double);
   double *qCoupled; qCoupled = Calloc(*kMax * *kMax, double);
-  //  Rprintf("\n    ++++++++++ allocation 3 done +++++++\n");
-
   int *rCoupled; rCoupled = Calloc(*NC, int);
   double *heat; heat=Calloc(*NC, double);
   for (nc=0; nc < *NC; nc++) {
     heat[nc] = 1.0 / (1 + *deltaT * nc);
   }
   /* End variables for coupled parallel chains */
-
-  //    Rprintf("\n    ++++++++++ allocation 4 done +++++++\n");
-
+  
   int i,j,m;
   int t;
   int *states; states = Calloc(*n, int);
   int *accepted; accepted = Calloc(1, int);
   int *triedChangeDim; triedChangeDim = Calloc(1, int);
   int mainAccepted = 0;
-  //  Rprintf("\n    ++++++++++ allocation 5 done +++++++\n");
-
   /* index to permutations */
   int *indexPerm; indexPerm = Calloc(*kMax, int);
   /* index to start every object */
@@ -3294,27 +3146,22 @@ void MetropolisSweep(double *y, double *x, int *varEqual, int *genome,
   int *indexStat; indexStat = Calloc(*kMax, int);
   /* new parameters (max limit) */
 
-  //    Rprintf("\n    ++++++++++ allocation 6 done +++++++\n");
-
   double *NewStatCoupled; NewStatCoupled = Calloc(*kMax, double);
   double *NewMuCoupled; NewMuCoupled = Calloc(*kMax, double);
   double *NewSigma2Coupled; NewSigma2Coupled = Calloc(*kMax, double);
   double *NewBetaCoupled; NewBetaCoupled = Calloc(*kMax * *kMax, double);
-  //  Rprintf("\n    ++++++++++ allocation 7 done +++++++\n");
 
   double *q; q = Calloc(*kMax * *kMax, double);
 
   unsigned int *viterbi_counts; 
   viterbi_counts = (unsigned int *) R_alloc(*kMax, sizeof(unsigned int));
   for(int dd = 0; dd < (*kMax); dd++) viterbi_counts[dd] = 0;
-  //  Rprintf("\n    ++++++++++ allocation 8 done +++++++\n");
 
   unsigned int k_sum[(*kMax)];
   unsigned int Total_k; 
   for(int dd = 0; dd < (*kMax); dd++) k_sum[dd] = 0;
   Total_k = 0;
 
-  
   /*   Genome deserves especial treatment. We could use a single entity
        because of pointer and array exchangeability. But to make things
        clear now, I keep them separate. */
@@ -3352,8 +3199,8 @@ void MetropolisSweep(double *y, double *x, int *varEqual, int *genome,
   indexBeta[0] = 0;
   indexStat[0] = 0;
   for(i=1; i<*kMax; ++i) {
-    indexMu[i] = (*TOT * 2)*i + indexMu[i-1];
-    indexBeta[i] = (*TOT * 2)*i*i + indexBeta[i-1];
+    indexMu[i] = (*TOT)*i + indexMu[i-1];
+    indexBeta[i] = (*TOT)*i*i + indexBeta[i-1];
     indexStat[i] = i + indexStat[i-1];
   }
   Rprintf("       Start burn-in\n");
@@ -3388,7 +3235,7 @@ void MetropolisSweep(double *y, double *x, int *varEqual, int *genome,
 
   /*  loglik of start values */
   for (i=1; i<=*kMax;++i) {
-    loglik[(i-1)* *TOT * 2] = loglikLastCoupled[i-1];
+    loglik[(i-1)* *TOT] = loglikLastCoupled[i-1];
     for (j=0; j<i; ++j) {
       OldStatCoupled[j] = stat[indexStat[i-1] + j];
       OldMuCoupled[j] = mu[indexMu[i-1] + j];
@@ -3481,7 +3328,7 @@ void MetropolisSweep(double *y, double *x, int *varEqual, int *genome,
     }
       
     /* Main chain */
-    loglik[*TOT * 2 * (rCoupled[0]-1) + times[rCoupled[0]-1]] = 
+    loglik[*TOT * (rCoupled[0]-1) + times[rCoupled[0]-1]] = 
       loglikLastCoupled[rCoupled[0]-1];
       
     /*  Auxiliaries for viterbi */
@@ -3644,7 +3491,7 @@ void MetropolisSweep(double *y, double *x, int *varEqual, int *genome,
       /* save main parameters */
       if (mainAccepted) {
 	mainAccepted = 0;
-	loglik[*TOT * 2 * (rCoupled[0]-1) + times[rCoupled[0]-1]] =
+	loglik[*TOT * (rCoupled[0]-1) + times[rCoupled[0]-1]] =
 	  loglikLastCoupled[rCoupled[0]-1];
 
 	/*  Auxiliaries for viterbi */
@@ -3809,7 +3656,7 @@ void MetropolisSweep(double *y, double *x, int *varEqual, int *genome,
       /* save main parameters */
       if (mainAccepted) {
 	mainAccepted = 0;
-	loglik[*TOT * 2 * (rCoupled[0]-1) + times[rCoupled[0]-1]] = 
+	loglik[*TOT * (rCoupled[0]-1) + times[rCoupled[0]-1]] = 
 	  loglikLastCoupled[rCoupled[0]-1];
 	/*  Auxiliaries for viterbi */
 	for (i=0; i< rCoupled[0]; ++i) {
@@ -3926,7 +3773,7 @@ void MetropolisSweep(double *y, double *x, int *varEqual, int *genome,
 	for (i=0; i<rCoupled[0]*rCoupled[0]; ++i) {
 	  beta[indexBeta[rCoupled[0]-1] + (times[rCoupled[0]-1]*rCoupled[0]*rCoupled[0]) + i] = NewBetaCoupled[i];
 	}
-	loglik[*TOT * 2 * (rCoupled[0]-1) + times[rCoupled[0]-1]] = 
+	loglik[*TOT * (rCoupled[0]-1) + times[rCoupled[0]-1]] = 
 	  loglikLastCoupled[rCoupled[0]-1];
 	times[rCoupled[0]-1]++;
       }

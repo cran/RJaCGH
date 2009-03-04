@@ -21,8 +21,8 @@ Q.NH(beta, x, q=-beta)
 }
 \details{
   RJaCGH assumes a non-homogeneous transition matrix with this form: 
-  Q[i,j] = exp(-beta[i,j] + beta[i,j]*x) / sum(i,.) {exp(-beta[i,.] +
-    beta[i,.]*x}
+  Q[i,j] = exp(-beta[i,j] + beta[i,j]*x) / sum(i,.) exp(-beta[i,.] +
+    beta[i,.]*x
 
   
   All beta[i,i] are constrained to be zero, for the model to be
@@ -33,7 +33,9 @@ Q.NH(beta, x, q=-beta)
   biological assumptions, for it makes the
   probabilities of staying in the same state decreasing with the
   distance to the next gene, and reaches a probability of 1/number of
-  hidden state when the distance to the next gene is the maximum. \newline
+  hidden state when the distance to the next gene is the maximum.
+
+  
   To avoid overflow errors, RJaCGH normalizes distances to be between 0
   and 1.
 }

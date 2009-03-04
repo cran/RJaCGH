@@ -14,8 +14,7 @@ probability of alteration greater than a given threshold.
 }
 \usage{
 pREC_A(obj, p, alteration = "Gain", array.weights = NULL,
-       force.write.files = FALSE, verbose = FALSE,
-       delete.rewritten = TRUE)
+       verbose = FALSE)
 % \method{pREC_A}{RJaCGH}(obj, p, alteration = "Gain", array.weights = NULL)
 % \method{pREC_A}{RJaCGH.Chrom}(obj, p, alteration = "Gain", array.weights = NULL)
 % \method{pREC_A}{RJaCGH.genome}(obj, p, alteration = "Gain", array.weights
@@ -32,23 +31,23 @@ pREC_A(obj, p, alteration = "Gain", array.weights = NULL,
   \item{alteration}{ Either 'Gain' or 'Lost' }
   \item{array.weights}{ When 'obj' contains several arrays, the user can
     give a weight to each of them according to their reliability or precision.}
-  \item{force.write.files}{If TRUE, the gzipped files with the Viterbi
-    sequence are written to disk even if they are, supposedly, already
-    there. }
+%   \item{force.write.files}{If TRUE, the gzipped files with the Viterbi
+%     sequence are written to disk even if they are, supposedly, already
+%     there. }
   \item{verbose}{If TRUE provide more details on what is being done, including
     intermediate output from the C functions themselves. Only helpful
     for debugging or if you are bored; this will often write more output than
     you want.}
-  \item{delete.rewritten}{If TRUE, delete the files with the Viterbi
-    sequence from disk.}
+%   \item{delete.rewritten}{If TRUE, delete the files with the Viterbi
+%     sequence from disk.}
 }
 \details{
   RJaCGH can compute common regions taking into account the
   probability of every probe to have an altered copy number. The result
   is a set of probes whose joint probability (not the product of their
   marginal probabilities, as returned by \code{\link{states}}
-  or \code{\link{model.averaging}})
-  is at least as \code{p} or greater. 
+  or \code{\link{modelAveraging}})
+  is at least as \emph{p} or greater. 
 
   Please note that if the method returns several sets or regions, the
   probability of alteration of all of them doesn't have to be over the
@@ -128,7 +127,7 @@ pREC_A(obj, p, alteration = "Gain", array.weights = NULL,
 }
 
 \seealso{\code{\link{RJaCGH}},
-  \code{\link{states}}, \code{\link{model.averaging}},
+  \code{\link{states}}, \code{\link{modelAveraging}},
    \code{\link{print.pREC_A}}
 %   \code{\link{getSequence}}
 %   \code{\link{prob.seq}}
@@ -144,7 +143,7 @@ Pos <- cumsum(Pos)
 Chrom <- rep(1:23, rep(10, 23))
 
 jp <- list(sigma.tau.mu=rep(0.05, 4), sigma.tau.sigma.2=rep(0.03, 4),
-           sigma.tau.beta=rep(0.07, 4), tau.split.mu=0.1)
+           sigma.tau.beta=rep(0.07, 4), tau.split.mu=0.1, tau.split.beta=0.1)
 
 fit.genome <- RJaCGH(y=y, Pos=Pos, Chrom=Chrom, model="Genome",
 burnin=1000, TOT=1000, jump.parameters=jp, k.max = 4)

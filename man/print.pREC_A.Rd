@@ -37,7 +37,7 @@
 \author{Oscar M. Rueda and Ramon Diaz Uriarte}
   
 \seealso{\code{\link{RJaCGH}},
-  \code{\link{states}}, \code{\link{model.averaging}},
+  \code{\link{states}}, \code{\link{modelAveraging}},
   \code{\link{pREC_A}}
 }
 \examples{
@@ -50,7 +50,7 @@ Pos <- cumsum(Pos)
 Chrom <- rep(1:23, rep(10, 23))
 
 jp <- list(sigma.tau.mu=rep(0.05, 4), sigma.tau.sigma.2=rep(0.03, 4),
-           sigma.tau.beta=rep(0.07, 4), tau.split.mu=0.1)
+           sigma.tau.beta=rep(0.07, 4), tau.split.mu=0.1, tau.split.beta=0.1)
 
 fit.genome <- RJaCGH(y=y, Pos=Pos, Chrom=Chrom, model="Genome",
 burnin=100, TOT=1000, jump.parameters=jp, k.max = 4)

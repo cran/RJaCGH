@@ -12,9 +12,9 @@ plot.Q.NH(x, beta, q=-beta, col = NULL, ...)
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{x}{Vector of distances between observations}
-  \item{beta}{\code{beta} parameter of the transition matrix. Must be a square
+  \item{beta}{\emph{beta} parameter of the transition matrix. Must be a square
     matrix with the same size as the number of hidden states}
-  \item{q}{\code{q} parameter of the transition matrix. Must be a square
+  \item{q}{\emph{q} parameter of the transition matrix. Must be a square
     matrix with the same size as the number of hidden states}
   \item{col}{vector of colors for each state. Must be of the same size
     as the number of hidden states}

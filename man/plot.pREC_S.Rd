@@ -21,7 +21,7 @@
     the mean length is printed.}
   \item{col}{A vector of color codes for the image plot.}
   \item{breaks}{Breakpoints for the code color. Must be a vector of
-    length \code{length(col) + 1}}
+    length \emph{length(col) + 1}}
   \item{dend}{Logical. If \code{TRUE}, a clustering of arrays is performed with
     \code{\link{hclust}} and arrays reordered.}
   \item{method}{Clustering method to apply. See \code{\link{hclust}}.

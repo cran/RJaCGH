@@ -16,7 +16,7 @@ normal.HMM.likelihood.NH.C(y, x, mu, sigma.2, beta, stat = NULL)
   \item{x}{Vector of distances between genes}
   \item{mu}{Vector of means for the hidden states}
   \item{sigma.2}{Vector of variances for the hidden states}
-  \item{beta}{\code{beta} in transition matrix}
+  \item{beta}{\emph{beta} in transition matrix}
   \item{stat}{Vector of initial probabilities. If NULL, a uniforma
     distribution is assumed.}
 %   \item{q}{\code{q} parameter in transition matrix. In RJaCGH model,

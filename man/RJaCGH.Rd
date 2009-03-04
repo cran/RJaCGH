@@ -10,11 +10,12 @@ through bayesian methods and Reversible Jump Markov chain Montecarlo.
 RJaCGH(y, Chrom = NULL, Start=NULL, End=NULL, Pos = NULL,
        Dist=NULL, probe.names=NULL, maxVar=NULL, model = "Genome",
        var.equal=TRUE, max.dist=NULL, normal.reference=0,
-       window = 1, burnin = 10000, TOT =10000,
+       window = NULL, burnin = 10000, TOT =10000,
        k.max = 6, stat = NULL, mu.alfa = NULL, mu.beta = NULL,
        s1=NULL, s2=NULL, init.mu=NULL, init.sigma.2=NULL, init.beta=NULL,
        prob.k = NULL, jump.parameters=list(),
-       start.k = NULL, RJ=TRUE, NC = 1, deltaT = 2)
+       start.k = NULL, RJ=TRUE, NC = 1, deltaT = 2, delete_gzipped =
+                 .__DELETE_GZIPPED, singleState = FALSE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -29,7 +30,7 @@ RJaCGH(y, Chrom = NULL, Start=NULL, End=NULL, Pos = NULL,
     specified with \code{Start}, \code{End} or \code{Pos}, but only in
     one of the two ways.}
   \item{Dist}{Optional vector of distances between genes. It should be a vector
-    of length \code{length(y)-1}. Note that when \code{Chrom} is not NULL,
+    of length \emph{length(y)-1}. Note that when \code{Chrom} is not NULL,
     every last value of every Chromosome is not used.}
   \item{probe.names}{Character vector with the number of the probes.}
   \item{maxVar}{Maximum value for the variance of the states. If
@@ -47,14 +48,15 @@ RJaCGH(y, Chrom = NULL, Start=NULL, End=NULL, Pos = NULL,
   \item{normal.reference}{The value considered as the mean of the normal
     state. See details. By default is \code{0}.}
   \item{window}{Multiplier of the standard deviation of the data to
-    determine the width of the normal state. See details. Default is 1.}
+    determine the width of the normal state. See details. Default (window
+    = NULL) is 1.}
 %   \item{normal.ref.percentile}{Percentage for the relabelling of
 %     states. See details. by default is 0.95.}
   \item{burnin}{Number of burn-in iterations in the Markov Chain}
   \item{TOT}{Number of iterations after the burn-in}
   \item{k.max}{Maximum number of hidden states to fit.}
   \item{stat}{Initial Distribution for the hidden states. Must be a
-    vector of size 1 + 2 + ... +\code{k.max}. If \code{NULL}, it is assumed a
+    vector of size 1 + 2 + ... +\emph{k.max}. If \code{NULL}, it is assumed a
     uniform distribution for every model.}
   \item{mu.alfa}{Hyperparameter. See details}
   \item{mu.beta}{Hyperparameter. See details}
@@ -77,7 +79,13 @@ RJaCGH(y, Chrom = NULL, Start=NULL, End=NULL, Pos = NULL,
   \item{init.beta}{Starting values for \code{beta} for the chain. See details}
   \item{NC}{Number of coupled parallel chains. See details}
   \item{deltaT}{Heat parameter for tempering the parallel chains. See details}
- 
+  \item{delete_gzipped}{Should temporal files with viterbi paths be
+    deleted?}
+  \item{singleState}{Logical. If TRUE, each hidden state is classified
+    into a state of copy number alteration. If FALSE, a probability
+    is assigned to each hidden state of being gained and lost. See
+  \code{\link{relabelStates}}}
+    
 %   \item{auto.label}{If not \code{NULL}, should be the minimum proportion of
 %   observations labeled as 'Normal'. See details.}
 }
@@ -97,15 +105,15 @@ RJaCGH(y, Chrom = NULL, Start=NULL, End=NULL, Pos = NULL,
   follows a uniform distribution between $0$ and \code{maxVar}.
 
   The model for the transition matrix is based on a random matrix
-  \code{beta} whose diagonal is zero. The transition matrix, \code{Q},
+  \emph{beta} whose diagonal is zero. The transition matrix, \emph{Q},
   has the form:
-    Q[i,j] = exp(-beta[i,j] + beta[i,j]*x) / sum(i,.) {exp(-beta[i,.] +
-      beta[i,.]*x}
+    Q[i,j] = exp(-beta[i,j] + beta[i,j]*x) / sum(i,.) exp(-beta[i,.] +
+      beta[i,.]*x
 
     
-  The prior distribution for \code{beta} is gamma with parameters 1, 1. 
-  The \code{x} are the distances between positions, normalized to lay
-  between zero and 1 (\code{x=diff(Pos) / max(diff(Pos))})
+  The prior distribution for \emph{beta} is gamma with parameters 1, 1. 
+  The \emph{x} are the distances between positions, normalized to lay
+  between zero and 1 (\emph{x=diff(Pos) / max(diff(Pos))})
 
   
   RJaCGH performs Markov Chain MonteCarlo with Reversible Jump to sample
@@ -148,7 +156,7 @@ RJaCGH(y, Chrom = NULL, Start=NULL, End=NULL, Pos = NULL,
   \code{jump.parameters} must be a list with the parameters for the
   moves. It must have components \code{sigma.tau.mu},
   \code{sigma.tau.sigma.2}, \code{sigma.tau.beta} These are vectors of
-  length \code{k.max}. \code{tau.split.mu} is a vector of
+  length \code{k.max}. \code{tau.split.mu},  \code{tau.split.beta} are vectors of
   length 1. If any of them is NULL, a call to the internal function
   \code{get.jump()} is made to find 'good' values.
 
@@ -278,9 +286,9 @@ RJaCGH(y, Chrom = NULL, Start=NULL, End=NULL, Pos = NULL,
 \author{Oscar M. Rueda and Ramon Diaz Uriarte}
 
 \seealso{\code{\link{summary.RJaCGH}},
-  \code{\link{states}}, \code{\link{model.averaging}},
+  \code{\link{states}}, \code{\link{modelAveraging}},
   \code{\link{plot.RJaCGH}}, \code{\link{trace.plot}},
-  \code{\link{gelman.rubin.plot}}, \code{\link{collapseChain}},
+%   \code{\link{gelman.rubin.plot}}, \code{\link{collapseChain}},
   \code{\link{relabelStates}}, \code{\link{pREC_A}},
   \code{\link{pREC_S}}
 }
@@ -293,19 +301,17 @@ Pos <- cumsum(Pos)
 Chrom <- rep(1:23, rep(10, 23))
 
 jp <- list(sigma.tau.mu=rep(0.05, 4), sigma.tau.sigma.2=rep(0.03, 4),
-           sigma.tau.beta=rep(0.07, 4), tau.split.mu=0.1)
+           sigma.tau.beta=rep(0.07, 4), tau.split.mu=0.1, tau.split.beta=0.1)
 
 fit.chrom <- RJaCGH(y=y, Pos=Pos, Chrom=Chrom, model="Chrom",
                     burnin=10, TOT=1000, k.max = 4,
                     jump.parameters=jp)
 ##RJ results for chromosome 5
-table(fit.chrom[[5]]$k)
+table(fit.chrom[["array1"]][[5]]$k)
 fit.genome <- RJaCGH(y=y, Pos=Pos, Chrom=Chrom, model="Genome",
 burnin=100, TOT=1000, jump.parameters=jp, k.max = 4)
 ## Results for the model with 3 states:
-apply(fit.genome[[3]]$mu, 2, summary)
-apply(fit.genome[[3]]$sigma.2, 2, summary)
-apply(fit.genome[[3]]$beta, c(1,2), summary)
+summary(fit.genome)
 }
 \keyword{models}% at least one, from doc/KEYWORDS
 

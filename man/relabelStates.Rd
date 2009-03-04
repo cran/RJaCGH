@@ -1,9 +1,7 @@
 \name{relabelStates}
 \alias{relabelStates}
 \alias{relabelStates.RJaCGH}
-\alias{relabelStates.RJaCGH.Chrom}
-\alias{relabelStates.RJaCGH.Genome}
-\alias{relabelStates.RJaCGH.array}
+
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{Relabelling of hidden states to biological states of alteration. }
 \description{
@@ -12,28 +10,31 @@
 }
 \usage{
 relabelStates(obj, normal.reference = 0,
-              window = 1, singleState = FALSE)
+              window = NULL, singleState = FALSE,
+array=NULL, Chrom=NULL)
 \method{relabelStates}{RJaCGH}(obj, normal.reference = 0,
-                               window = 1, singleState = FALSE)
-\method{relabelStates}{RJaCGH.Chrom}(obj, normal.reference = 0,
-                              window = 1, singleState = FALSE)
-\method{relabelStates}{RJaCGH.Genome}(obj, normal.reference = 0,
-                       window = 1, singleState = FALSE)
-\method{relabelStates}{RJaCGH.array}(obj, normal.reference = 0,
-                       window = 1, singleState = FALSE)
+                               window = NULL, singleState = FALSE,
+array=NULL, Chrom=NULL)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{obj}{An object returned form RJaCGH of class 'RJaCGH',
-  'RJaCGH.Chrom', 'RJaCGH.Genome', 'RJaCGH.array'.}
+  \item{obj}{An object returned from RJaCGH() of class 'RJaCGH',
+  'RJaCGH.Chrom', 'RJaCGH.Genome'.}
     \item{normal.reference}{The value considered as the mean of the normal
     state. See details. By default is \code{0}.}
   \item{window}{Multiplier of the standard deviation of the data to
-    dtermine the width of the normal state. See details. Default is 1.}
+    dtermine the width of the normal state. See details. Default (window
+    = NULL) is 1.}
     \item{singleState}{If TRUE, each state is assigned a probability of
       1 of being Gained or Lost or Normal, and 0 of being
       anyting else. This mimics the behavior of previous versions of
       RJaCGH. See details.}
+    \item{array}{Vector of arrays to be relabeled. If NULL, all of
+      them.}
+    \item{Chrom}{Vector of chromosome to be relabeled (only if a
+      different model has been fitted to each of them). If NULL,
+      all of them are labeled.}
+      
 
 }
 \details{

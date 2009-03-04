@@ -1,25 +1,21 @@
 \name{states}
 \alias{states}
 \alias{states.RJaCGH}
-\alias{states.RJaCGH.Chrom}
-\alias{states.RJaCGH.Genome}
-\alias{states.RJaCGH.array}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{'states' method for RJaCGH objects}
 \description{
 Methods for estimating the hidden state sequence of a RJaCGH model.
 }
 \usage{
-states(obj, k)
-\method{states}{RJaCGH}(obj, k=NULL)
-\method{states}{RJaCGH.Chrom}(obj, k=NULL)
-\method{states}{RJaCGH.Genome}(obj, k=NULL)
-\method{states}{RJaCGH.array}(obj, k=NULL)
+states(obj, array=NULL, Chrom=NULL, k=NULL)
+\method{states}{RJaCGH}(obj, array=NULL, Chrom=NULL, k=NULL)
 
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{obj}{any of RJaCGH, RJaCGH.Chrom, RJaCGH.Genome, RJaCGH.array objects}
+  \item{obj}{any of RJaCGH, RJaCGH.Chrom, RJaCGH.Genome objects}
+  \item{array}{vector of arrays to get the states from.}
+  \item{Chrom}{vector of chromosomes to get the states from.}
   \item{k}{Model to summarize (i.e., number of hidden states). If NULL,
     the most visited is taken.}
 }
@@ -51,9 +47,10 @@ sublists, as in \code{\link{RJaCGH}}.
 
   \author{Oscar M. Rueda and Ramon Diaz Uriarte}
   \seealso{\code{\link{RJaCGH}},
-  \code{\link{summary.RJaCGH}}, \code{\link{model.averaging}},
+  \code{\link{summary.RJaCGH}}, \code{\link{modelAveraging}},
   \code{\link{plot.RJaCGH}}, \code{\link{trace.plot}},
-  \code{\link{gelman.rubin.plot}}, \code{\link{collapseChain}}}
+%   \code{\link{gelman.rubin.plot}}, \code{\link{collapseChain}}
+  }
 
 \examples{
 y <- c(rnorm(100, 0, 1), rnorm(10, -3, 1), rnorm(20, 3, 1), rnorm(100,
