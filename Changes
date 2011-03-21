@@ -1,3 +1,4 @@
+2.0.1	2001-03-21    Resaved snijders.RData with tools::resaveRdaFiles() 
 2.0.0	2009-02-26    Major code reorganization and cleaning.
 		      Added COBRA reprint on common regions.
 		      Changes to vignette.
