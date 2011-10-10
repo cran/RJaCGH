@@ -2562,14 +2562,14 @@ tempfile00 <- function(pattern = "rjacgh_seq") {
 
 
 
-### Using save and load or .saveRDS and .readRDS are about equally
+### Using save and load or saveRDS and readRDS are about equally
 ### fast and memory consuming. But the RDS files deal with an object
 ### directly, not the name of an object. Some experiments follow way down.
 
 writeRO2 <- function(x, rootn, tmpdir, ftype = "RData") {
     fname <- tempfile3(tempfile00(rootn), ".", ftype = ftype)
     fnfull <- file.path(tmpdir, fname)
-    .saveRDS(x, file = fnfull, compress = FALSE)
+    saveRDS(x, file = fnfull, compress = FALSE)
     return(list(tmpdir = tmpdir, fname = fname))
 }
 
@@ -2581,7 +2581,7 @@ readRO2 <- function(x) {
                    "or the file has been deleted (the later is ",
                    "a non-recoverable error)."))
     }
-    return(.readRDS(fname))
+    return(readRDS(fname))
 }
 
 
