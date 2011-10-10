@@ -1799,7 +1799,7 @@ genomePlot <- function(obj, array=NULL, weights=NULL,
   Chrom <- obj$Chrom
   n.chrom <- length(unique(Chrom))
   par(mar=c(0,0,0,2), oma=c(0, 4, 4, 4))
-  layout(rbind(c(1, 2), c(3, 3)), width=c(1,1), height=c(9,2.5))
+  layout(rbind(c(1, 2), c(3, 3)), widths=c(1,1), heights=c(9,2.5))
   xmax <- max(Pos)
   plot(0,0, type="n", xlim=c(0, xmax), ylim=c(1, ceiling(n.chrom/2)),
        axes=FALSE, ylab="Chromosome", xlab="",...)
@@ -2402,7 +2402,7 @@ plot.pREC_S <- function(x, array.labels=NULL,
     if (is.null(array.labels)) array.labels <- array.names
     k <- length(array.names)
     par(oma=c(2, 2, 4, 2))
-    layout(matrix(c(1, 2), 1, 2), width=c(1, 7))
+    layout(matrix(c(1, 2), 1, 2), widths=c(1, 7))
     if(!is.null(Chrom)) {
         if(!inherits(x, "pREC_S.Chromosomes")) {
             stop("With this type of object it makes no sense to use the Chrom argument")

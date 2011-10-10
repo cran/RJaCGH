@@ -1,7 +1,0 @@
-All files in the src directory, except nnhl.c, are from zlib v. 1.2.3. We
-have copied all the *.c and *.h and have removed, from the original
-distribution: example.c minigzip.c. No other changes have been made to any
-of the files.
-
-We have kept the original README from zlib (in the root directory of
-RJaCGH). Please read it for details.

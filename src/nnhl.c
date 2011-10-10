@@ -462,7 +462,7 @@ void read_convert_prob_seq(double *prob_row_seq,
   infile = gzopen(path, "rb");
   file_row = 0;
   while(1) {
-    gzgets(infile, inb, SIZE_READ);
+    if(!gzgets(infile, inb, SIZE_READ)) break;
     token = strtok(inb, SEPCHARS);
     // if(gzeof(infile) == 1) break; won't work: can stop one line before last.
     if(token == NULL) break;
@@ -471,12 +471,16 @@ void read_convert_prob_seq(double *prob_row_seq,
     column = 0;
     k = atoi(token);
     token = strtok(NULL, SEPCHARS);
+    if(!token) break;
     count_viterbi = atoi(token);
     token = strtok(NULL, SEPCHARS);
+    if(!token) break;
     sum_viterbi = atoi(token);
     token = strtok(NULL, SEPCHARS);
+    if(!token) break;
     count_k = atoi(token);
     token = strtok(NULL, SEPCHARS);
+    if(!token) break;
     sum_k = atoi(token);
 
     prob_row_seq[file_row] =

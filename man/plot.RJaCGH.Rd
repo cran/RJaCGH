@@ -90,7 +90,8 @@ jp <- list(sigma.tau.mu=rep(0.5, 4), sigma.tau.sigma.2=rep(0.3, 4),
            sigma.tau.beta=rep(0.7, 4), tau.split.mu=0.5, tau.split.beta=0.5)
 fit.Chrom <- RJaCGH(y=y, Pos=Pos, Chrom=Chrom, model="Chrom",
                     burnin=100, TOT=1000, jump.parameters=jp, k.max=4)
-fit.Genom <- RJaCGH(y=y, Pos=Pos, Chrom=Chrom, model="Genome", burnin=100, TOT=1000, jump.parameters=jp, k.max=4)
+fit.Genom <- RJaCGH(y=y, Pos=Pos, Chrom=Chrom, model="Genome", burnin=100,
+                    TOT=1000, jump.parameters=jp, k.max=4)
 fit.none <- RJaCGH(y=y, Pos=Pos, Chrom=NULL, model="None",
                    burnin=100, TOT=1000, jump.parameters=jp, k.max=4)
 
@@ -106,10 +107,11 @@ y2 <- c(rnorm(100, 0, 1), rnorm(10, -3, 1), rnorm(20, 3, 1),
 ya <- cbind(y, y2)
 
 fit.Chrom.array <- RJaCGH(y=ya, Pos=Pos, Chrom=Chrom, model="Chrom",
-                          burnin=100, TOT=1000, jump.parameters=jp, k.max=4)
-fit.Genom.array <- RJaCGH(y=ya, Pos=Pos, Chrom=Chrom, model="Genome", burnin=100, TOT=1000, jump.parameters=jp, k.max=4)
+      burnin=100, TOT=1000, jump.parameters=jp, k.max=4)
+fit.Genom.array <- RJaCGH(y=ya, Pos=Pos, Chrom=Chrom, model="Genome",
+      burnin=100, TOT=1000, jump.parameters=jp, k.max=4)
 fit.none.array <- RJaCGH(y=ya, Pos=Pos, Chrom=NULL, model="None",
-                         burnin=100, TOT=1000, jump.parameters=jp, k.max=4)
+      burnin=100, TOT=1000, jump.parameters=jp, k.max=4)
 
 plot(fit.Chrom.array)
 plot(fit.Genom.array)
