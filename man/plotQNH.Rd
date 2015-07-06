@@ -1,5 +1,5 @@
-\name{plot.Q.NH}
-\alias{plot.Q.NH}
+\name{plotQNH}
+\alias{plotQNH}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{Plot transition probabilities}
 \description{
@@ -7,7 +7,7 @@ Plot the probabilities of staying in the same state for a non-homogenous
 hidden Markov model.
 }
 \usage{
-plot.Q.NH(x, beta, q=-beta, col = NULL, ...)
+plotQNH(x, beta, q=-beta, col = NULL, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -42,7 +42,7 @@ state versus distance between adjacent genes, for every state.
 x <- rexp(99)
 x <- x/ max(x)
 beta <- matrix(c(0, 1, 3, 0), 2, 2)
-plot.Q.NH(x=x, beta=beta, q=-beta, col=c(1,2))
+plotQNH(x=x, beta=beta, q=-beta, col=c(1,2))
 }
 \keyword{models}% at least one, from doc/KEYWORDS
 

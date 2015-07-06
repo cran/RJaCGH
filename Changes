@@ -1,5 +1,6 @@
-2.0.2	2001-11-10    Replaced .saveRDS and .readRDS with saveRDS and readRDS.
-2.0.1	2001-03-21    Resaved snijders.RData with tools::resaveRdaFiles() 
+2.0.4	2015-07-06    Replaced Q.NH() by QNH() and plot.Q.NH() by plotQNH()
+2.0.2	2011-11-10    Replaced .saveRDS and .readRDS with saveRDS and readRDS.
+2.0.1	2011-03-21    Resaved snijders.RData with tools::resaveRdaFiles() 
 2.0.0	2009-02-26    Major code reorganization and cleaning.
 		      Added COBRA reprint on common regions.
 		      Changes to vignette.

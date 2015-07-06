@@ -44,7 +44,7 @@ smoother=FALSE, \ldots)
   of the number of hidden states. The second and third are a density
   plot of the posterior distribution of means and variances. The four
   one is the probability of staying in the same hidden state, as
-  returned by \code{\link{plot.Q.NH}}, and the last one shows the
+  returned by \code{\link{plotQNH}}, and the last one shows the
   original observations colored by thir hidden state and the probability
   of being in that hidden state.
 
@@ -81,6 +81,7 @@ smoother=FALSE, \ldots)
 }
 \examples{
 
+\dontrun{
 y <- c(rnorm(100, 0, 1), rnorm(10, -3, 1), rnorm(20, 3, 1), rnorm(100,
                                                                   0, 1))
 Pos <- round(runif(230))
@@ -117,6 +118,7 @@ plot(fit.Chrom.array)
 plot(fit.Genom.array)
 plot(fit.none.array)
 
+}
 }
 \keyword{models}% at least one, from doc/KEYWORDS
 

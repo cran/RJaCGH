@@ -47,6 +47,7 @@ color key is drawn.
   for the plot to make sense.}
 
 \examples{
+\dontrun{
 data(snijders)
 y <- gm13330$LogRatio[!is.na(gm13330$LogRatio)]
 Pos <- gm13330$PosBase[!is.na(gm13330$LogRatio)]
@@ -68,5 +69,6 @@ fit.genome <- RJaCGH(y=y, Pos=Pos, Chrom=Chrom, model="Genome",
 burnin=1000, TOT=1000, jump.parameters=jp, k.max = 4)
 genomePlot(fit.genome)
 genomePlot(fit.genome, col=c(3, 1, 2), breakpoints=c(-0.5, 0.5))
+}
 }
 \keyword{ models }% __ONLY ONE__ keyword per line

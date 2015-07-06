@@ -1,8 +1,9 @@
+import("stats", "graphics", "grDevices")
 useDynLib(RJaCGH)
 
 export("modelAveraging",
        "normal.HMM.likelihood.NH.C",
-       "Q.NH", "plot.Q.NH", "RJaCGH", "simulateRJaCGH",
+       "QNH", "plotQNH", "RJaCGH", "simulateRJaCGH",
        "states", "trace.plot", 
        "pREC_A", "pREC_S", "genomePlot", "relabelStates",
        "smoothMeans"

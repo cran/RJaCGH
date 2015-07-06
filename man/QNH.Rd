@@ -1,12 +1,12 @@
-\name{Q.NH}
-\alias{Q.NH}
+\name{QNH}
+\alias{QNH}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{Transition Matrix for non-homogeneous Hidden Markov Model}
 \description{
 This function returns the transition matrix for a given distance between genes.
 }
 \usage{
-Q.NH(beta, x, q=-beta)
+QNH(beta, x, q=-beta)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -51,12 +51,12 @@ Q.NH(beta, x, q=-beta)
 }
 \author{Oscar M. Rueda and Ramon Diaz-Uriarte}
 
-\seealso{plot.Q.NH}
+\seealso{plotQNH}
 \examples{
 ## Model with two hidden states
 ## Note that RJaCGH normalizes distances to be between 0 and 1
 beta <- matrix(c(0, 1, 3, 0), 2, 2)
-Q.NH(beta=beta, x=0.4)
+QNH(beta=beta, x=0.4)
 }
 \keyword{models}% at least one, from doc/KEYWORDS
 

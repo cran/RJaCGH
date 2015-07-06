@@ -54,7 +54,7 @@ dummyChr <- "-"
 ## beta is the vector of regression coefficients
 ## x is the distance to the next gene
 #########################################################################
-Q.NH <- function(beta, x, q=-beta) {
+QNH <- function(beta, x, q=-beta) {
 
   k <- nrow(q)
   Q <- exp(q + beta*x)
@@ -95,7 +95,7 @@ normal.HMM.likelihood.NH.filter <- function(y, k, beta, x, mu, sigma.2,
       c[i] <- sum(filter.cond[i,]*dnorm(y[i], mu, sqrt(sigma.2)))
       c[i] <- ifelse(identical(c[i], 0), TOL, c[i])
       filter[i,] <- filter.cond[i,]*dnorm(y[i], mu, sqrt(sigma.2))/c[i]
-      Q <- Q.NH(q=q, beta=beta, x=x[i])
+      Q <- QNH(q=q, beta=beta, x=x[i])
       for (j in 1:k) {
         filter.cond[i+1,j] <- sum(filter[i,]*Q[,j,drop=FALSE])
       }
@@ -151,7 +151,7 @@ hidden.states <- function(obj, x) {
     B[n,] <- filter[n,]
     states[n] <- which.max(B[n,])
     for (i in (n-1):1) {
-      Q <- Q.NH(q=-obj$beta, beta=obj$beta, x=x[i])
+      Q <- QNH(q=-obj$beta, beta=obj$beta, x=x[i])
       den <- sum(filter[i,]*Q[,states[i+1]])
       den <-ifelse(den==0, 1, den)
       B[i,] <- filter[i,]*Q[,states[i+1]]
@@ -170,7 +170,7 @@ simulateRJaCGH <- function(n, x=NULL, mu, sigma.2, beta, start) {
   states[1] <- start
   y[1] <- rnorm(1, mu[states[1]], sqrt(sigma.2[states[1]]))
   for (i in 2:n) {
-    Q <- Q.NH(beta=beta, x=x[i-1], q=-beta)
+    Q <- QNH(beta=beta, x=x[i-1], q=-beta)
     states[i] <- sample(x=1:k, size=1, prob=Q[states[i-1],])
     y[i] <- rnorm(1, mu[states[i]], sqrt(sigma.2[states[i]]))
   }
@@ -181,7 +181,7 @@ simulateRJaCGH <- function(n, x=NULL, mu, sigma.2, beta, start) {
 ## Plot transition probabilities
 #########################################################################
 
-plot.Q.NH <- function(x, beta, q=-beta, col=NULL,...) {
+plotQNH <- function(x, beta, q=-beta, col=NULL,...) {
   n<- length(x)
   k <- nrow(q)
   prob <- matrix(NA, n, k)
@@ -191,7 +191,7 @@ plot.Q.NH <- function(x, beta, q=-beta, col=NULL,...) {
     col[grep("[L]", rownames(beta))] <- 3
   }
   for (i in 1:n) {
-    prob[i,] <- diag(Q.NH(q=q, beta=beta, x=x[i]))
+    prob[i,] <- diag(QNH(q=q, beta=beta, x=x[i]))
   }
   plot(prob[order(x),1] ~ sort(x), type="l", ylim=c(min(prob), max(prob)), col=col[1], ...)
   ## case with homogeneous probabilities
@@ -1220,11 +1220,9 @@ plot.RJaCGH.Genome <- function(x, array=NULL, k=NULL,  Dist.for.model=NULL,
                                model.averaging=TRUE, cex=1,
                                smoother=FALSE, Pos=NULL,
                                 Pos.rel = NULL, Chrom=NULL, ...)  {
-  def.par <- par(no.readonly = TRUE)
   layout(matrix(c(1,3,5,2,4, 5),3,2), heights=c(0.25, 0.25, 0.5))
   opar <- par(cex.lab=cex*0.8,   cex.main=cex*0.9,
               cex.axis=cex*0.8,  mar=c(5,4,4,4) + 0.1)
-  on.exit(par(def.par))
   
   y <- readRO2(x$y)
     
@@ -1268,7 +1266,7 @@ plot.RJaCGH.Genome <- function(x, array=NULL, k=NULL,  Dist.for.model=NULL,
                                            bw=sd(sigma.2[,i])), col=col[i])
     
     summary.obj <- summary(x, k)
-  plot.Q.NH(q=-summary.obj$beta, beta=summary.obj$beta, x=Dist.for.model[!is.na(Dist.for.model)],
+  plotQNH(q=-summary.obj$beta, beta=summary.obj$beta, x=Dist.for.model[!is.na(Dist.for.model)],
               main="Probability of permanence in the same hidden state", xlab="Distance", ylab="Prob.", col=col)
   internal.plot.obs.pred(y = y,
                            Pos = Pos,
@@ -1352,7 +1350,7 @@ plot.RJaCGH.Chrom <- function(x, Chrom=NULL, array=NULL,
         ## Always model.averaging if Chrom==NULL
         model.averaging <- TRUE
         res <- modelAveraging(x)
-        ## FIXME: cambiará algo de esto cuando guardemos summaires
+        ## FIXME: cambiara algo de esto cuando guardemos summaires
         ## en el objeto? Creo que no. Pero estar al loro!!!
         max.levels <- lapply(res[[array]], function(x) levels(x$states))
         max.levels <- names(table(unlist(max.levels)))
@@ -1414,8 +1412,6 @@ plot.RJaCGH <- function(x, array=NULL, k=NULL, Chrom=NULL, show="average", weigh
   }
   else {
   
-    def.par <- par(no.readonly = TRUE)
-    on.exit(par(def.par))
 
     if (show!="average" & show!="frequency") {
         stop("'show' must be either 'average' or 'frequency'\n")
@@ -2823,7 +2819,7 @@ readRO2 <- function(x) {
 ###         ##      newobj[[i]]$Pos <- obj[[i]]$Pos
 ###         ##      newobj[[i]]$Pos.rel <- obj[[i]]$Pos.rel
 ###         ##      newobj[[i]]$Chrom <- obj[[i]]$Chrom
-###         ## qué hacía esto? zz: FIXME
+###         ## que hacia esto? zz: FIXME
 ###         ##     attr(newobj[[i]], 'names') <- attr(obj[[i]], 'names')
 ###         class(newobj[[i]]) <- "RJaCGH.Chrom"
 ###     }
